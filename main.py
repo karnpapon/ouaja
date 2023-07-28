@@ -19,12 +19,14 @@ quit_app = False
 commands = queue.Queue()
 
 # Display
-WIDTH = 835
-HEIGHT = 470
+WIDTH = 960
+HEIGHT = 540
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("PTK By @Karnpapon")
 bg = pygame.image.load(os.path.join("Images", "ghost-board.png"))
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
+coin = pygame.image.load(os.path.join("Images", "coin-sm-shadow2.png"))
+# coin = pygame.transform.scale(coin, (60, 60))
 
 openai.api_key = os.getenv("OPENAI_API")
 USER = "Person:"
@@ -87,13 +89,13 @@ class Pointer(object):
     def __init__(self, x, y, color):
         self.color = color
         self.position = pygame.Vector2(x, y)
-        self.velocity = pygame.Vector2(4, 4)
+        self.velocity = pygame.Vector2(2, 2)
         self.acceleration = pygame.Vector2(0.5, 0.5)
         self.friction = 0.95
 
     def Draw(self, surface):
-        pygame.draw.circle(surface, self.color,
-                           (self.position.x, self.position.y), 15, 0)
+        surface.blit(coin, (self.position.x - coin.get_width() /
+                     2, self.position.y - coin.get_height() / 2))
 
     def Move(self, to: pygame.Vector2):
         target = to
@@ -135,6 +137,7 @@ def main():
     answer_index = 0
     timeout = FPS * 4
     go_to_init_pos = False
+    # is_italic = False
     answer = ""
     current_answer = ""
 
@@ -165,8 +168,10 @@ def main():
                 timeout = FPS * 4
                 current_answer = ""
                 go_to_init_pos = False
+                # is_italic = bool(random.getrandbits(1))
             else:
                 current_answer += answer[answer_index].upper()
+                # is_italic = bool(random.getrandbits(1))
                 answer_index += 1
                 if answer_index < len(answer):
                     char = answer[answer_index].upper()
@@ -183,9 +188,10 @@ def main():
             # current_answer = ""
             timeout = FPS * 4
 
-        ghost_msg = pygame.font.SysFont("Arial", 50, italic=True)
+        ghost_msg = pygame.font.SysFont(
+            "Argent Pixel CF", 85)
         ghost_msg = ghost_msg.render(str(current_answer), True, RED)
-        WINDOW.blit(ghost_msg, (150, 0))
+        WINDOW.blit(ghost_msg, (50, 125))
 
         if (answer):
             pointer.Move(to)

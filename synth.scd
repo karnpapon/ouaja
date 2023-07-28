@@ -7,6 +7,7 @@ s.waitForBoot{
 	var xybuf = Buffer.alloc(s,2);
 	var paramsbuf = Buffer.alloc(s,10);
 	var counter = 0;
+	var window_w = 960;
 
 	// multi-layer perceptron
 	var mlp = FluidMLPRegressor(s,
@@ -19,9 +20,9 @@ s.waitForBoot{
 		validation:0
 	);
 
-	win = Window("GhostSynth", Rect(10, 10, 835, 320)).front;
+	win = Window("GhostSynth", Rect(10, 10, 960, 347)).front;
 
-	multislider = MultiSliderView(win,Rect(10, 10, 300, 720*0.4))
+	multislider = MultiSliderView(win,Rect(10, 10, 400, 720*0.45))
 	.elasticMode_(1)
 	.isFilled_(1)
 	.action_({
@@ -30,7 +31,7 @@ s.waitForBoot{
 	})
 	.value_(0.5.dup(10));
 
-	xyslider = Slider2D(win,Rect(320,10,1280*0.3,720*0.4))
+	xyslider = Slider2D(win,Rect(420,10,1280*0.3,720*0.45))
 	.action_{
 		arg view;
 		// view.x.postln; //top-left: 0, bottom-right: 1
@@ -38,7 +39,7 @@ s.waitForBoot{
 		xybuf.setn(0,[view.x,view.y]);
 	};
 
-	Button(win,Rect(1280 - 560,10,100,20))
+	Button(win,Rect(window_w - 120,10,100,20))
 	.states_([["Add Points"]])
 	.action_{
 		var id = "point-%".format(counter);
@@ -50,7 +51,7 @@ s.waitForBoot{
 		paramsdata.print;
 	};
 
-	Button(win,Rect(1280 - 560,40,100,20))
+	Button(win,Rect(window_w - 120,40,100,20))
 	.states_([["Save Data"]])
 	.action_{
 		FileDialog({
@@ -60,7 +61,7 @@ s.waitForBoot{
 		},{},2,0,true);
 	};
 
-	Button(win,Rect(1280 - 560,70,100,20))
+	Button(win,Rect(window_w - 120,70,100,20))
 	.states_([["Load Data"]])
 	.action_{
 		FileDialog({
@@ -70,7 +71,7 @@ s.waitForBoot{
 		},fileMode:2,acceptMode:0,stripResult:true);
 	};
 
-	Button(win,Rect(1280 - 560,100,100,20))
+	Button(win,Rect(window_w - 120,100,100,20))
 	.states_([["Train"]])
 	.action_{
 		mlp.fit(xydata,paramsdata,{
@@ -79,7 +80,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(1280 - 560,130,100,20))
+	Button(win,Rect(window_w - 120,130,100,20))
 	.states_([["Save MLP"]])
 	.action_{
 		Dialog.savePanel({
@@ -91,7 +92,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(1280 - 560,160,100,20))
+	Button(win,Rect(window_w - 120,160,100,20))
 	.states_([["Load MLP"]])
 	.action_{
 		Dialog.openPanel({
@@ -100,7 +101,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(1280 - 560,190,100,20))
+	Button(win,Rect(window_w - 120,190,100,20))
 	.states_([["Not Predicting"],["Predicting"]])
 	.action_{
 		arg but;
