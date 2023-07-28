@@ -167,7 +167,7 @@ def main():
         if answer_index <= len(answer) and answer:
             if ball.position.distance_to(to) < 15 + 15:
                 timeout -= 1
-                print("timeout:", timeout)
+                # print("timeout:", timeout)
 
         if timeout == 0:
             if to == pygame.math.Vector2(INIT_POINT_X, INIT_POINT_Y):
