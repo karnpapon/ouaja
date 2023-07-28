@@ -7,15 +7,17 @@ from easing_functions import *
 import openai
 import threading
 import queue
+import argparse
+import random
+from pythonosc import udp_client
 from dotenv import load_dotenv
 load_dotenv()
 # import speech_recognition as sr
-# import time
 # import pyttsx3
 
 pygame.init()
 screen = pygame.display.set_mode((600, 500))
-quit_game = False
+quit_app = False
 commands = queue.Queue()
 
 # Display
@@ -131,8 +133,7 @@ def ask(question):
         frequency_penalty=0,
         presence_penalty=0
     )
-    print("response......")
-    print(response)
+    # print(response)
     response = response['choices'][0]['text'].replace("\n", "")
     return str(response)
 
@@ -142,12 +143,9 @@ def main():
     timeout = FPS * 4
     go_to_init_pos = False
     answer = ""
+    current_answer = ""
 
-    if (answer):
-        to = pygame.Vector2(
-            CHARACTERS[answer[answer_index]][0], CHARACTERS[answer[answer_index]][1])
-
-    while not quit_game:
+    while not quit_app:
         try:
             command = commands.get(False)
         except queue.Empty:
@@ -155,6 +153,8 @@ def main():
 
         if not command == None:
             answer = command
+            answer = answer.upper()
+            print("answer", answer, answer_index)
             to = pygame.Vector2(
                 CHARACTERS[answer[answer_index]][0], CHARACTERS[answer[answer_index]][1])
 
@@ -164,30 +164,43 @@ def main():
                 pygame.quit()
                 sys.exit()
 
+        if answer_index <= len(answer) and answer:
+            if ball.position.distance_to(to) < 15 + 15:
+                timeout -= 1
+                print("timeout:", timeout)
+
+        if timeout == 0:
+            if to == pygame.math.Vector2(INIT_POINT_X, INIT_POINT_Y):
+                timeout = FPS * 4
+                current_answer = ""
+                go_to_init_pos = False
+            else:
+                current_answer += answer[answer_index].upper()
+                answer_index += 1
+                if answer_index < len(answer):
+                    char = answer[answer_index].upper()
+                    timeout = FPS * 4
+                    if CHARACTERS.get(char):
+                        # client.send_message("/ghost_coord", char)
+                        to = pygame.Vector2(
+                            CHARACTERS[char][0], CHARACTERS[char][1])
+                else:
+                    go_to_init_pos = True
+
+        if go_to_init_pos and to != pygame.math.Vector2(INIT_POINT_X, INIT_POINT_Y):
+            answer_index = 0
+            to = pygame.Vector2(INIT_POINT_X, INIT_POINT_Y)
+            # current_answer = ""
+            timeout = FPS * 4
+
+        ghost_msg = pygame.font.SysFont("Arial", 50, italic=True)
+        ghost_msg = ghost_msg.render(str(current_answer), True, WHITE)
+        WINDOW.blit(ghost_msg, (150, 0))
+
         if (answer):
             ball.Move(to)
 
         ball.Draw(WINDOW)
-
-        if answer_index < len(answer) and answer:
-            v1 = pygame.math.Vector2(ball.position.x, ball.position.y)
-            v2 = pygame.math.Vector2(to.x, to.y)
-            if v1.distance_to(v2) < 15 + 15:
-                timeout -= 1
-                if timeout == 0:
-                    answer_index += 1
-                    if answer_index < len(answer):
-                        char = answer[answer_index].upper()
-                        timeout = FPS * 4
-                        if CHARACTERS.get(char):
-                            to = pygame.Vector2(
-                                CHARACTERS[char][0], CHARACTERS[char][1])
-                    else:
-                        go_to_init_pos = True
-
-        if go_to_init_pos:
-            to = pygame.Vector2(INIT_POINT_X, INIT_POINT_Y)
-            go_to_init_pos = False
 
         pygame.display.update()
         clock.tick(FPS)
@@ -195,14 +208,27 @@ def main():
 
 class Input(threading.Thread):
     def run(self):
-        while not quit_game:
+        while not quit_app:
             question = input()
             question = user + question.lower() + '\n'
-            answer = ask(question)
-            commands.put(answer)
+            # answer = ask(question)
+            mockup_ans = random.choice(["ab", "bc", "cd"])
+            commands.put(mockup_ans)
+            # print("commands: ", commands.get())
 
 
 if __name__ == "__main__":
+
+    # setup/parsing OSC
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ip", default="127.0.0.1",
+                        help="The ip of the OSC server")
+    parser.add_argument("--port", type=int, default=8080,
+                        help="The port the OSC server is listening on")
+    args = parser.parse_args()
+    client = udp_client.SimpleUDPClient(args.ip, args.port)
+
+    # app
     inp = Input()
     inp.start()
     main()
