@@ -181,7 +181,6 @@ def main():
                     char = answer[answer_index].upper()
                     timeout = FPS * 4
                     if CHARACTERS.get(char):
-                        # client.send_message("/ghost_coord", char)
                         to = pygame.Vector2(
                             CHARACTERS[char][0], CHARACTERS[char][1])
                 else:
@@ -201,6 +200,8 @@ def main():
             ball.Move(to)
 
         ball.Draw(WINDOW)
+        client.send_message(
+            "/synth_coord", [ball.position.x / WIDTH, 1.0 - ball.position.y / HEIGHT])
 
         pygame.display.update()
         clock.tick(FPS)

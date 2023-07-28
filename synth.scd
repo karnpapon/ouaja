@@ -19,9 +19,9 @@ s.waitForBoot{
 		validation:0
 	);
 
-	win = Window("GhostSynth", Rect(10, 10, 840, 320)).front;
+	win = Window("GhostSynth", Rect(10, 10, 1050, 320)).front;
 
-	multislider = MultiSliderView(win,Rect(10, 10, 400, 300))
+	multislider = MultiSliderView(win,Rect(10, 10, 400, 720*0.4))
 	.elasticMode_(1)
 	.isFilled_(1)
 	.action_({
@@ -30,13 +30,15 @@ s.waitForBoot{
 	})
 	.value_(0.5.dup(10));
 
-	xyslider = Slider2D(win,Rect(420,10,300,300))
+	xyslider = Slider2D(win,Rect(420,10,1280*0.4,720*0.4))
 	.action_{
 		arg view;
+		// view.x.postln; //top-left: 0, bottom-right: 1
+		// view.y.postln; //top-left: 1, bottom-right: 0
 		xybuf.setn(0,[view.x,view.y]);
 	};
 
-	Button(win,Rect(730,10,100,20))
+	Button(win,Rect(1280 - 340,10,100,20))
 	.states_([["Add Points"]])
 	.action_{
 		var id = "point-%".format(counter);
@@ -48,7 +50,7 @@ s.waitForBoot{
 		paramsdata.print;
 	};
 
-	Button(win,Rect(730,40,100,20))
+	Button(win,Rect(1280 - 340,40,100,20))
 	.states_([["Save Data"]])
 	.action_{
 		FileDialog({
@@ -58,7 +60,7 @@ s.waitForBoot{
 		},{},2,0,true);
 	};
 
-	Button(win,Rect(730,70,100,20))
+	Button(win,Rect(1280 - 340,70,100,20))
 	.states_([["Load Data"]])
 	.action_{
 		FileDialog({
@@ -68,7 +70,7 @@ s.waitForBoot{
 		},fileMode:2,acceptMode:0,stripResult:true);
 	};
 
-	Button(win,Rect(730,100,100,20))
+	Button(win,Rect(1280 - 340,100,100,20))
 	.states_([["Train"]])
 	.action_{
 		mlp.fit(xydata,paramsdata,{
@@ -77,7 +79,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(730,130,100,20))
+	Button(win,Rect(1280 - 340,130,100,20))
 	.states_([["Save MLP"]])
 	.action_{
 		Dialog.savePanel({
@@ -89,7 +91,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(730,160,100,20))
+	Button(win,Rect(1280 - 340,160,100,20))
 	.states_([["Load MLP"]])
 	.action_{
 		Dialog.openPanel({
@@ -98,7 +100,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(730,190,100,20))
+	Button(win,Rect(1280 - 340,190,100,20))
 	.states_([["Not Predicting"],["Predicting"]])
 	.action_{
 		arg but;
@@ -139,5 +141,14 @@ s.waitForBoot{
 			multislider.value_(msg[3..]);
 		};
 	},"/paramsChanged");
+
+	OSCdef(\coordChanged, {
+		arg msg;
+		// msg[0].postln;
+		defer {
+			xyslider.setXY(msg[1], msg[2]);
+			xybuf.setn(0,[msg[1],msg[2]]);
+		};
+	}, '/synth_coord')
 };
 )
