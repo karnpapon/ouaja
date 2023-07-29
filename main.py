@@ -18,71 +18,72 @@ pygame.init()
 quit_app = False
 commands = queue.Queue()
 
-# Display
 WIDTH = 960
 HEIGHT = 540
-WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("PTK By @Karnpapon")
-bg = pygame.image.load(os.path.join("Images", "ghost-board.png"))
-bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
-coin = pygame.image.load(os.path.join("Images", "coin-sm-shadow2.png"))
-# coin = pygame.transform.scale(coin, (60, 60))
 
-openai.api_key = os.getenv("OPENAI_API")
 USER = "Person:"
 PROMPT_TEXT = "GHOST"
 
-# accel
+INIT_POINT_X = 400
+INIT_POINT_Y = 80
 MAX_SPEED = 20
+TIMEOUT_FACTOR = 4
+FPS = 30
+DECELERATION = 5
 
-# Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 PURPLE = (142, 68, 173)
-INIT_POINT_X = 400
-INIT_POINT_Y = 80
-FPS = 60
-DECELERATION = 5
 
-CHARACTERS = {'A': (100, 212),
-              ' ': (626, 354),
-              'B': (150, 208),
-              'C': (206, 208),
-              'D': (251, 208),
-              'E': (302, 208),
-              'F': (342, 208),
-              'G': (398, 208),
-              'H': (441, 208),
-              'I': (485, 208),
-              'J': (524, 208),
-              'K': (568, 208),
-              'L': (611, 208),
-              'M': (662, 218),
-              'N': (104, 283),
-              'O': (161, 283),
-              'P': (216, 283),
-              'Q': (271, 283),
-              'R': (324, 283),
-              'S': (378, 283),
-              'T': (419, 283),
-              'U': (455, 283),
-              'V': (503, 283),
-              'W': (554, 283),
-              'X': (655, 283),
-              'Y': (705, 283),
-              'Z': (755, 283),
-              '0': (99, 344),
-              '1': (145, 344),
-              '2': (200, 344),
-              '3': (245, 344),
-              '4': (297, 344),
-              '5': (342, 344),
-              '6': (396, 344),
-              '7': (442, 344),
-              '8': (491, 344),
-              '9': (544, 344)}
+CHARACTERS = {
+    ' ': (688, 467),
+    'A': (75, 290),
+    'B': (148, 290),
+    'C': (222, 290),
+    'D': (290, 290),
+    'E': (360, 290),
+    'F': (425, 290),
+    'G': (500, 290),
+    'H': (570, 290),
+    'I': (630, 290),
+    'J': (676, 290),
+    'K': (726, 290),
+    'L': (793, 290),
+    'M': (877, 290),
+    'N': (80, 370),
+    'O': (145, 370),
+    'P': (210, 370),
+    'Q': (274, 370),
+    'R': (333, 370),
+    'S': (397, 370),
+    'T': (458, 370),
+    'U': (525, 370),
+    'V': (594, 370),
+    'W': (671, 370),
+    'X': (753, 370),
+    'Y': (817, 370),
+    'Z': (884, 370),
+    '0': (75, 467),
+    '1': (134, 467),
+    '2': (189, 467),
+    '3': (247, 467),
+    '4': (311, 467),
+    '5': (364, 467),
+    '6': (431, 467),
+    '7': (491, 467),
+    '8': (551, 467),
+    '9': (616, 467)
+}
+
+WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("PTK By @Karnpapon")
+bg = pygame.image.load(os.path.join("Images", "ghost-board.png"))
+bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
+coin = pygame.image.load(os.path.join("Images", "coin-sm-shadow2.png"))
+
+openai.api_key = os.getenv("OPENAI_API")
 
 
 class Pointer(object):
@@ -135,7 +136,7 @@ def ask(question):
 
 def main():
     answer_index = 0
-    timeout = FPS * 4
+    timeout = FPS * TIMEOUT_FACTOR
     go_to_init_pos = False
     # is_italic = False
     answer = ""
@@ -165,7 +166,7 @@ def main():
 
         if timeout == 0:
             if to == pygame.math.Vector2(INIT_POINT_X, INIT_POINT_Y):
-                timeout = FPS * 4
+                timeout = FPS * TIMEOUT_FACTOR
                 current_answer = ""
                 go_to_init_pos = False
                 # is_italic = bool(random.getrandbits(1))
@@ -175,7 +176,7 @@ def main():
                 answer_index += 1
                 if answer_index < len(answer):
                     char = answer[answer_index].upper()
-                    timeout = FPS * 4
+                    timeout = FPS * TIMEOUT_FACTOR
                     if CHARACTERS.get(char):
                         to = pygame.Vector2(
                             CHARACTERS[char][0], CHARACTERS[char][1])
@@ -186,7 +187,7 @@ def main():
             answer_index = 0
             to = pygame.Vector2(INIT_POINT_X, INIT_POINT_Y)
             # current_answer = ""
-            timeout = FPS * 4
+            timeout = FPS * TIMEOUT_FACTOR
 
         ghost_msg = pygame.font.SysFont(
             "Argent Pixel CF", 85)
