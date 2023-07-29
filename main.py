@@ -77,9 +77,10 @@ CHARACTERS = {
     '9': (616, 467)
 }
 
-WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
+os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
+WINDOW = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("PTK By @Karnpapon")
-bg = pygame.image.load(os.path.join("Images", "ghost-board.png"))
+bg = pygame.image.load(os.path.join("Images", "ghost-board2.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 coin = pygame.image.load(os.path.join("Images", "coin-sm-shadow2.png"))
 

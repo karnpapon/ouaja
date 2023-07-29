@@ -1,10 +1,15 @@
-/*MIDIClient.init;
-s.boot;
-s.options.outDevice = "Built-in Output";
-Server.default.options.numInputBusChannels = 0;*/
-
 // 1. press play btn to setup fx.
 // 2. press button 8 (lower btn) to play sample.
+
+// fader[0]: freqshift                | knob[0]: freq
+// fader[1]: LPF                      | knob[1]: loBoost
+// fader[2]: HPF                      | knob[2]: hiBoost
+// fader[3]: sub                      | knob[3]: freq
+// fader[4]: grain(wet+grainsize)     | knob[4]: rand + feedback
+// fader[5]: *BROKEN*                 | knob[5]: *BROKEN*
+// fader[6]: reverb                   | knob[6]: time
+// fader[7]: shape                    | knob[7]: hi
+// fader[8]: NOOP                     | knob[8]: NOOP
 (
 ~webmaster = {
 var root = "/Users/karnpaponboonput/Desktop/codes/live-ghosting";
@@ -20,25 +25,6 @@ var root = "/Users/karnpaponboonput/Desktop/codes/live-ghosting";
       self.controlBusses.faders.at(2).set(1.0); // HPF
     },
 
-    patchSource: {|self|
-    	var namebase = 'webmaster_';
-    	// insert sound playback engine to head (first item in chain.) of group.
-    /*  b = Buffer.readChannel(s, root ++ src.standardizePath, channels: [0]);
-      c = Buffer.readChannel(s, root ++ src.standardizePath, channels: [1]);
-      z = Buffer.sendCollection(s, Env([0, 1, 0], [0.001, 0.999]).discretize, 1);*/
-
-			// x = Synth.head(s, namebase ++ 'main_synth');
-
-      // x = Synth.head(self.synthgroup, namebase ++ 'playerbuf',
-      //   ['buf', soundfileBuffer,
-      //   'imphz', self.controlBusses.knobs.at(8).asMap,
-      //   'rate', self.controlBusses.faders.at(8).asMap ]
-      // );
-
-    },
-
-
-
     // setup fx chain.
     patch: {|self|
       var namebase = 'webmaster_';
@@ -47,13 +33,6 @@ var root = "/Users/karnpaponboonput/Desktop/codes/live-ghosting";
       s.makeBundle(nil, {
 
         // SOURCE
-
-        // EFFECTS
-        /*o = Synth.tail(self.synthgroup,
-          namebase ++ 'clouds',
-          ['outbus', 0]
-        );*/
-
         Synth.tail(self.synthgroup,
           namebase ++ 'lpf',
           [ 'cutoff', self.controlBusses.faders.at(1).asMap ]
@@ -96,22 +75,6 @@ var root = "/Users/karnpaponboonput/Desktop/codes/live-ghosting";
           namebase ++ 'comp',
           [ 'slopeBelow', 0.6 ]
         );
-
-        // ANALYSIS
-        // Synth.tail(self.synthgroup,
-        //   namebase ++ 'amp',
-        //   [ 'outbus', self.analysis.amp ]
-        // );
-
-        //  Synth.tail(self.synthgroup,
-        //    namebase ++ 'low_amp',
-        //    [ 'outbus', self.analysis.loAmp ]
-        //  );
-
-        //  Synth.tail(self.synthgroup,
-        //    namebase ++ 'high_amp',
-        //    [ 'outbus', self.analysis.hiAmp ]
-        //  );
 
         Synth.tail(self.synthgroup,
           namebase ++ 'sub',
@@ -237,7 +200,7 @@ var root = "/Users/karnpaponboonput/Desktop/codes/live-ghosting";
     	};
 
     	n.downBtns[8].onPress = {|val|
-    		self.patchSource;
+				// self.patchSource;
     		"downBtns[8]Pressed".postln;
     	};
 
