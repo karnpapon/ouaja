@@ -1,5 +1,6 @@
 import pygame
 import sys
+import re
 import os
 from pygame.locals import *
 from easing_functions import *
@@ -203,21 +204,46 @@ def main():
         clock.tick(FPS)
 
 
+def clamp(minimum, x, maximum):
+    return max(minimum, min(x, maximum))
+
+
 class Input(threading.Thread):
+
     def run(self):
+        global FPS
+        global quit_app
         while not quit_app:
             question = input()
             if question != "":
-                question = USER + question.lower() + '\n'
-                # answer = ask(question)
-                mockup_ans = random.choice(["I'm a ghost", "oxygen", "zebra"])
-                reply_answer.put(mockup_ans)
-                try:
-                    outFile = open('conversation.txt', 'a')
-                    outFile.write('Q:{}A:{}\n\n'.format(question, mockup_ans))
-                    outFile.close()
-                except IOError as e:
-                    print("I/O error({0.filename}):".format(e))
+                # match commands with prefex (::).
+                # current cmds are
+                # to set fps = ::SET_FPS <frames>
+                # to quit    = ::BYE
+                if val := re.match("^((::).[A-z]+) *\d*", question):
+                    cmd = val.group().split(' ')
+                    if cmd[0] == "::SET_FPS":
+                        try:
+                            FPS = clamp(10, int(cmd[1]), 60)
+                        except IndexError:
+                            print("your index is not correct or maybe out of range.")
+
+                    elif cmd[0] == "::BYE":
+                        print("bye!")
+                        quit_app = True
+                else:
+                    question = USER + question.lower() + '\n'
+                    # answer = ask(question)
+                    mockup_ans = random.choice(
+                        ["I'm a ghost", "oxygen", "zebra"])
+                    reply_answer.put(mockup_ans)
+                    try:
+                        outFile = open('conversation.txt', 'a')
+                        outFile.write('Q:{}A:{}\n\n'.format(
+                            question, mockup_ans))
+                        outFile.close()
+                    except IOError as e:
+                        print("I/O error({0.filename}):".format(e))
 
 
 if __name__ == "__main__":
