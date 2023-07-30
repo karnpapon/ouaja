@@ -12,8 +12,6 @@ import random
 from pythonosc import udp_client
 from dotenv import load_dotenv
 load_dotenv()
-# import speech_recognition as sr
-# import pyttsx3
 
 pygame.init()
 quit_app = False
@@ -25,8 +23,8 @@ HEIGHT = 540
 USER = "Person:"
 PROMPT_TEXT = "GHOST"
 
-INIT_POINT_X = 485
-INIT_POINT_Y = 80
+INIT_POINT_X = 482
+INIT_POINT_Y = 50
 MAX_SPEED = 20
 TIMEOUT_FACTOR = 4
 FPS = 30
@@ -39,49 +37,56 @@ GREEN = (0, 255, 0)
 PURPLE = (142, 68, 173)
 
 CHARACTERS = {
-    ' ': (688, 467),
-    'A': (75, 290),
-    'B': (148, 290),
-    'C': (222, 290),
-    'D': (290, 290),
-    'E': (360, 290),
-    'F': (425, 290),
-    'G': (500, 290),
-    'H': (570, 290),
-    'I': (630, 290),
-    'J': (676, 290),
-    'K': (726, 290),
-    'L': (793, 290),
-    'M': (877, 290),
-    'N': (80, 370),
-    'O': (145, 370),
-    'P': (210, 370),
-    'Q': (274, 370),
-    'R': (333, 370),
-    'S': (397, 370),
-    'T': (458, 370),
-    'U': (525, 370),
-    'V': (594, 370),
-    'W': (671, 370),
-    'X': (753, 370),
-    'Y': (817, 370),
-    'Z': (884, 370),
-    '0': (75, 467),
-    '1': (134, 467),
-    '2': (189, 467),
-    '3': (247, 467),
-    '4': (311, 467),
-    '5': (364, 467),
-    '6': (431, 467),
-    '7': (491, 467),
-    '8': (551, 467),
-    '9': (616, 467)
+    ' ': (482, 482),
+
+    'A': (95, 234),
+    'B': (252, 234),
+    'C': (405, 234),
+    'D': (558, 234),
+    'E': (707, 234),
+    'F': (858, 234),
+
+    'G': (97, 289),
+    'H': (249, 289),
+    'I': (404, 289),
+    'J': (556, 289),
+    'K': (707, 289),
+    'L': (858, 289),
+
+    'M': (97, 345),
+    'N': (249, 345),
+    'O': (404, 345),
+    'P': (556, 345),
+    'Q': (707, 345),
+    'R': (858, 345),
+
+    'S': (97, 401),
+    'T': (249, 401),
+    'U': (404, 401),
+    'V': (556, 401),
+    'W': (707, 401),
+    'X': (858, 401),
+
+    'Y': (404, 463),
+    'Z': (556, 463),
+
+    '0': (92, 464),
+    '1': (150, 464),
+    '2': (206, 464),
+    '3': (268, 464),
+    '4': (328, 464),
+
+    '5': (638, 464),
+    '6': (699, 464),
+    '7': (758, 464),
+    '8': (815, 464),
+    '9': (875, 464)
 }
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load(os.path.join("Images", "ghost-board2.png")).convert()
+bg = pygame.image.load(os.path.join("Images", "ghost-board4.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 coin = pygame.image.load(os.path.join("Images", "coin-sm-shadow2.png"))
 
@@ -189,9 +194,9 @@ def main():
             timeout = FPS * TIMEOUT_FACTOR
 
         ghost_msg = pygame.font.SysFont(
-            "Argent Pixel CF", 85)
+            "Argent Pixel CF", 50)
         ghost_msg = ghost_msg.render(str(current_answer), True, WHITE)
-        WINDOW.blit(ghost_msg, (50, 125))
+        WINDOW.blit(ghost_msg, (50, 105))
 
         if (answer):
             pointer.Move(to)
@@ -220,6 +225,9 @@ class Input(threading.Thread):
                 # current cmds are
                 # to set fps = ::SET_FPS <frames>
                 # to quit    = ::BYE
+
+                # TODO: add stop while printing answer
+                # TODO: add SET_FPS_OFFSET
                 if val := re.match("^((::).[A-z]+) *\d*", question):
                     cmd = val.group().split(' ')
                     if cmd[0] == "::SET_FPS":
@@ -233,14 +241,14 @@ class Input(threading.Thread):
                         quit_app = True
                 else:
                     question = USER + question.lower() + '\n'
-                    # answer = ask(question)
-                    mockup_ans = random.choice(
-                        ["I'm a ghost", "oxygen", "zebra"])
-                    reply_answer.put(mockup_ans)
+                    answer = ask(question)
+                    # mockup_ans = random.choice(
+                    #     ["abcdefghijklmnopqrstuvwxyz"])
+                    reply_answer.put(answer)
                     try:
                         outFile = open('conversation.txt', 'a')
                         outFile.write('Q:{}A:{}\n\n'.format(
-                            question, mockup_ans))
+                            question, answer))
                         outFile.close()
                     except IOError as e:
                         print("I/O error({0.filename}):".format(e))
