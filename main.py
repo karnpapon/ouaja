@@ -41,42 +41,42 @@ PURPLE = (142, 68, 173)
 CHARACTERS = {
     ' ': (482, 482),
 
-    'A': (95, 234),
-    'B': (252, 234),
-    'C': (405, 234),
-    'D': (558, 234),
-    'E': (707, 234),
-    'F': (858, 234),
+    'A': (95, 234 + 10),
+    'B': (252, 234 + 10),
+    'C': (405, 234 + 10),
+    'D': (558, 234 + 10),
+    'E': (707, 234 + 10),
+    'F': (858, 234 + 10),
 
-    'G': (97, 289),
-    'H': (249, 289),
-    'I': (404, 289),
-    'J': (556, 289),
-    'K': (707, 289),
-    'L': (858, 289),
+    'G': (97, 289 + 10),
+    'H': (249, 289 + 10),
+    'I': (404, 289 + 10),
+    'J': (556, 289 + 10),
+    'K': (707, 289 + 10),
+    'L': (858, 289 + 10),
 
-    'M': (97, 345),
-    'N': (249, 345),
-    'O': (404, 345),
-    'P': (556, 345),
-    'Q': (707, 345),
-    'R': (858, 345),
+    'M': (97, 345 + 10),
+    'N': (249, 345 + 10),
+    'O': (404, 345 + 10),
+    'P': (556, 345 + 10),
+    'Q': (707, 345 + 10),
+    'R': (858, 345 + 10),
 
-    'S': (97, 401),
-    'T': (249, 401),
-    'U': (404, 401),
-    'V': (556, 401),
-    'W': (707, 401),
-    'X': (858, 401),
+    'S': (97, 401 + 10),
+    'T': (249, 401 + 10),
+    'U': (404, 401 + 10),
+    'V': (556, 401 + 10),
+    'W': (707, 401 + 10),
+    'X': (858, 401 + 10),
 
-    'Y': (404, 463),
-    'Z': (556, 463),
+    'Y': (404, 463 + 10),
+    'Z': (556, 463 + 10),
 
-    '0': (92, 464),
-    '1': (150, 464),
-    '2': (206, 464),
-    '3': (268, 464),
-    '4': (328, 464),
+    '0': (92, 464 + 10),
+    '1': (150, 464 + 10),
+    '2': (206, 464 + 10),
+    '3': (268, 464 + 10),
+    '4': (328, 464 + 10),
 
     '5': (638, 464),
     '6': (699, 464),
@@ -88,7 +88,7 @@ CHARACTERS = {
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load(os.path.join("images", "ghost-board4.png")).convert()
+bg = pygame.image.load(os.path.join("images", "ghost-board5.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 coin = pygame.image.load(os.path.join("images", "coin-sm-shadow2.png"))
 
@@ -240,7 +240,7 @@ def main():
         ghost_msg = pygame.font.SysFont(
             "Argent Pixel CF", 50)
         ghost_msg = ghost_msg.render(str(current_answer), True, WHITE)
-        draw_text(WINDOW, current_answer, WHITE, [50, 105, 825, 78*4],pygame.font.SysFont("Argent Pixel CF", 50))
+        draw_text(WINDOW, current_answer, WHITE, [70, 105, 805, 78*4],pygame.font.SysFont("Argent Pixel CF", 50))
 
         if (answer):
             pointer.Move(to)
