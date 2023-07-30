@@ -2,6 +2,10 @@
 
 ouaja (วาจา, /waː˧.t͡ɕaː˧/ pronouced as 'waa-jaa', a Thai word for "speech" ), a tool for live (ghosting) performance.
 
+<img src="Images/preview.png"/>
+
+# usage
+
 run `python3 main.py --ip 127.0.0.1 --port 57120`
 
 # commands
