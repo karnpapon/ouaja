@@ -4,7 +4,6 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
 import pygame
-import textwrap
 from pygame.locals import *
 from easing_functions import *
 import openai
@@ -12,6 +11,7 @@ import threading
 import queue
 import argparse
 import random
+from button import Button
 from pythonosc import udp_client
 from dotenv import load_dotenv
 load_dotenv()
@@ -90,7 +90,9 @@ WINDOW = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("live-ghosting")
 bg = pygame.image.load(os.path.join("images", "ghost-board5.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
-coin = pygame.image.load(os.path.join("images", "coin-sm-shadow2.png"))
+logo = pygame.image.load(os.path.join("images", "logo.png")).convert()
+logo = pygame.transform.scale(logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
+coin = pygame.image.load(os.path.join("images", "coin-sm-shadow2.png")).convert()
 
 openai.api_key = os.getenv("OPENAI_API")
 
@@ -164,6 +166,9 @@ def draw_text(surface, text, color, rect, font, aa=False, bkg=None):
 
     return text
 
+def get_font(size):
+    return pygame.font.SysFont("Argent Pixel CF", size)
+
 # Game Variables
 clock = pygame.time.Clock()
 pointer = Pointer(INIT_POINT_X, INIT_POINT_Y, RED)
@@ -184,8 +189,44 @@ def ask(question):
     response = response['choices'][0]['text'].replace("\n", "")
     return str(response)
 
-
 def main():
+    while not quit_app:
+
+        # WINDOW.blit(logo, ((WIDTH/2) - logo.get_width() / 2, (HEIGHT/4) - logo.get_height() / 2))
+        MENU_MOUSE_POS = pygame.mouse.get_pos()
+
+        # MENU_TEXT = get_font(100).render("MAIN MENU", True, "#b68f40")
+        # MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
+
+        PLAY_BUTTON = Button(image=logo, pos=( (WIDTH/2) - 20, (HEIGHT/2) - 20 ), 
+                            text_input="", font=get_font(70), base_color="#d7fcd4", hovering_color="White")
+        # OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(640, 400), 
+        #                     text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+        # QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 550), 
+        #                     text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+
+        # WINDOW.blit(MENU_TEXT, MENU_RECT)
+
+        for button in [PLAY_BUTTON]:
+            button.changeColor(MENU_MOUSE_POS)
+            button.update(WINDOW)
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    start()
+                # if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
+                #     options()
+                # if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
+                #     pygame.quit()
+                #     sys.exit()
+
+        pygame.display.update()
+
+def start():
     answer_index = 0
     timeout = FPS * TIMEOUT_FACTOR
     go_to_init_pos = False
