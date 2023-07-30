@@ -1,7 +1,10 @@
-import pygame
 import sys
 import re
 import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
+import pygame
+import textwrap
 from pygame.locals import *
 from easing_functions import *
 import openai
@@ -12,7 +15,6 @@ import random
 from pythonosc import udp_client
 from dotenv import load_dotenv
 load_dotenv()
-
 pygame.init()
 quit_app = False
 reply_answer = queue.Queue()
@@ -86,9 +88,9 @@ CHARACTERS = {
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load(os.path.join("Images", "ghost-board4.png")).convert()
+bg = pygame.image.load(os.path.join("images", "ghost-board4.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
-coin = pygame.image.load(os.path.join("Images", "coin-sm-shadow2.png"))
+coin = pygame.image.load(os.path.join("images", "coin-sm-shadow2.png"))
 
 openai.api_key = os.getenv("OPENAI_API")
 
@@ -119,6 +121,48 @@ class Pointer(object):
         self.position.x += self.velocity.x
         self.position.y += self.velocity.y
 
+
+# draw some text into an area of a surface
+# automatically wraps words
+# returns any text that didn't get blitted
+# https://www.pygame.org/wiki/TextWrap
+def draw_text(surface, text, color, rect, font, aa=False, bkg=None):
+    rect = pygame.Rect(rect)
+    y = rect.top
+    lineSpacing = -2
+
+    # get the height of the font
+    fontHeight = font.size("Tg")[1]
+
+    while text:
+        i = 1
+
+        # determine if the row of text will be outside our area
+        if y + fontHeight > rect.bottom:
+            break
+
+        # determine maximum width of line
+        while font.size(text[:i])[0] < rect.width and i < len(text):
+            i += 1
+
+        # if we've wrapped the text, then adjust the wrap to the last word      
+        if i < len(text): 
+            i = text.rfind(" ", 0, i) + 1
+
+        # render the line and blit it to the surface
+        if bkg:
+            image = font.render(text[:i], 1, color, bkg)
+            image.set_colorkey(bkg)
+        else:
+            image = font.render(text[:i], aa, color)
+
+        surface.blit(image, (rect.left, y))
+        y += fontHeight + lineSpacing
+
+        # remove the text we just blitted
+        text = text[i:]
+
+    return text
 
 # Game Variables
 clock = pygame.time.Clock()
@@ -196,7 +240,7 @@ def main():
         ghost_msg = pygame.font.SysFont(
             "Argent Pixel CF", 50)
         ghost_msg = ghost_msg.render(str(current_answer), True, WHITE)
-        WINDOW.blit(ghost_msg, (50, 105))
+        draw_text(WINDOW, current_answer, WHITE, [50, 105, 825, 78*4],pygame.font.SysFont("Argent Pixel CF", 50))
 
         if (answer):
             pointer.Move(to)
@@ -267,7 +311,7 @@ class Input(threading.Thread):
                     question = USER + question.lower() + '\n'
                     # answer = ask(question)
                     mockup_ans = random.choice(
-                        ["abcdefghijklmnopqrstuvwxyz"])
+                        ["I am a ghost, so I don't have a gender."])
                     reply_answer.put(mockup_ans)
                     try:
                         outFile = open('conversation.txt', 'a')

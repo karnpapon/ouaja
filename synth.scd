@@ -30,7 +30,7 @@ s.waitForBoot{
 		validation:0
 	);
 
-	win = Window("GhostSynth", Rect(0, 0, 960-200, 347-100)).front;
+	win = Window("GhostSynth", Rect(0, 0, 960-220, 242)).front;
 	multislider = MultiSliderView(win,Rect(10, 10, 400-100, (720*0.45)-100))
 	.elasticMode_(1)
 	.isFilled_(1)
@@ -48,7 +48,7 @@ s.waitForBoot{
 		xybuf.setn(0,[view.x,view.y]);
 	};
 
-	Button(win,Rect(window_w - 340,10,100,15))
+	Button(win,Rect(window_w - 340,10,100,20))
 	.states_([["Add Points"]])
 	.action_{
 		var id = "point-%".format(counter);
@@ -60,7 +60,7 @@ s.waitForBoot{
 		paramsdata.print;
 	};
 
-	Button(win,Rect(window_w - 340,40 - 10,100,15))
+	Button(win,Rect(window_w - 340,40 - 10,100,20))
 	.states_([["Save Data"]])
 	.action_{
 		FileDialog({
@@ -70,7 +70,7 @@ s.waitForBoot{
 		},{},2,0,true);
 	};
 
-	Button(win,Rect(window_w - 340,70-20,100,15))
+	Button(win,Rect(window_w - 340,70-20,100,20))
 	.states_([["Load Data"]])
 	.action_{
 		FileDialog({
@@ -80,7 +80,7 @@ s.waitForBoot{
 		},fileMode:2,acceptMode:0,stripResult:true);
 	};
 
-	Button(win,Rect(window_w - 340,100-30,100,15))
+	Button(win,Rect(window_w - 340,100-30,100,20))
 	.states_([["Train"]])
 	.action_{
 		mlp.fit(xydata,paramsdata,{
@@ -89,7 +89,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(window_w - 340,130-40,100,15))
+	Button(win,Rect(window_w - 340,130-40,100,20))
 	.states_([["Save MLP"]])
 	.action_{
 		Dialog.savePanel({
@@ -101,7 +101,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(window_w - 340,160-50,100,15))
+	Button(win,Rect(window_w - 340,160-50,100,20))
 	.states_([["Load MLP"]])
 	.action_{
 		Dialog.openPanel({
@@ -111,7 +111,7 @@ s.waitForBoot{
 		});
 	};
 
-	Button(win,Rect(window_w - 340,190-60,100,15))
+	Button(win,Rect(window_w - 340,190-60,100,20))
 	.states_([["Not Predicting"],["Predicting"]])
 	.action_{
 		arg but;
@@ -119,7 +119,7 @@ s.waitForBoot{
 		~synth.set(\predicting,but.value);
 	};
 
-	Button(win,Rect(window_w - 340,220-70,100,15))
+	Button(win,Rect(window_w - 340,220-70,100,20))
 	.states_([["Play"], ["Pause"]])
 	.action_{
 		arg but;

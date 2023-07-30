@@ -1,36 +1,15 @@
-Q:Person:dfd
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:ff
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:ff
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:fdf
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:ff
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:dfdf
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:fff
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:fdf
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:fff
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person: ::set_velocity_factor 10
-A:abcdefghijklmnopqrstuvwxyz
-
-Q:Person:fff
-A:abcdefghijklmnopqrstuvwxyz
-
 Q:Person:who are you?
-A:abcdefghijklmnopqrstuvwxyz
+A:I am a ghost.
+
+Q:Person:why you dead?
+A:I don't know.
+
+Q:Person:are you male or female?
+A:I am a ghost, so I don't have a gender.
+
+Q:Person:ff
+A:I am a ghost, so I don't have a gender.
+
+Q:Person:ff
+A:I am a ghost, so I don't have a gender.
 
