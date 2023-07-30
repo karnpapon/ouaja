@@ -28,7 +28,7 @@ INIT_POINT_Y = 50
 MAX_SPEED = 20
 TIMEOUT_FACTOR = 4
 FPS = 30
-DECELERATION = 5
+VELOCITY = 2
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -97,7 +97,7 @@ class Pointer(object):
     def __init__(self, x, y, color):
         self.color = color
         self.position = pygame.Vector2(x, y)
-        self.velocity = pygame.Vector2(2, 2)
+        self.velocity = pygame.Vector2(VELOCITY, VELOCITY)
         self.acceleration = pygame.Vector2(0.5, 0.5)
         self.friction = 0.95
 
@@ -217,38 +217,62 @@ class Input(threading.Thread):
 
     def run(self):
         global FPS
+        global TIMEOUT_FACTOR
+        global MAX_SPEED
+        global pointer
         global quit_app
-        while not quit_app:
-            question = input()
-            if question != "":
-                # match commands with prefex (::).
-                # current cmds are
-                # to set fps = ::SET_FPS <frames>
-                # to quit    = ::BYE
+        global reply_answer
 
-                # TODO: add stop while printing answer
-                # TODO: add SET_FPS_OFFSET
+        while not quit_app:
+            question = input("> ")
+            if question != "":
+                # match commands with prefix (::).
                 if val := re.match("^((::).[A-z]+) *\d*", question):
                     cmd = val.group().split(' ')
                     if cmd[0] == "::SET_FPS":
                         try:
                             FPS = clamp(10, int(cmd[1]), 60)
                         except IndexError:
-                            print("your index is not correct or maybe out of range.")
-
+                            print(
+                                "your SET_FPS index is not correct or maybe out of range.")
+                    elif cmd[0] == "::SET_TIMEOUT_FACTOR":
+                        try:
+                            TIMEOUT_FACTOR = clamp(1, int(cmd[1]), 8)
+                        except IndexError:
+                            print(
+                                "your TIMEOUT_FACTOR index is not correct or maybe out of range.")
+                    elif cmd[0] == "::SET_MAX_SPEED":
+                        try:
+                            MAX_SPEED = clamp(1, int(cmd[1]), 200)
+                        except IndexError:
+                            print(
+                                "your MAX_SPEED index is not correct or maybe out of range.")
+                    # elif cmd[0] == "::SET_VELOCITY":
+                    #     try:
+                    #         pointer.velocity.x = clamp(1, int(cmd[1]), 10)
+                    #         pointer.velocity.y = clamp(1, int(cmd[1]), 10)
+                    #     except IndexError:
+                    #         print(
+                    #             "your VELOCITY index is not correct or maybe out of range.")
                     elif cmd[0] == "::BYE":
-                        print("bye!")
                         quit_app = True
+                    # elif cmd[0] == "::BREAK":
+                        # try:
+                        #     reply_answer.get(False)
+                        # except queue.Empty:
+                        #     continue
+                        # reply_answer.task_done()
+
                 else:
                     question = USER + question.lower() + '\n'
-                    answer = ask(question)
-                    # mockup_ans = random.choice(
-                    #     ["abcdefghijklmnopqrstuvwxyz"])
-                    reply_answer.put(answer)
+                    # answer = ask(question)
+                    mockup_ans = random.choice(
+                        ["abcdefghijklmnopqrstuvwxyz"])
+                    reply_answer.put(mockup_ans)
                     try:
                         outFile = open('conversation.txt', 'a')
                         outFile.write('Q:{}A:{}\n\n'.format(
-                            question, answer))
+                            question, mockup_ans))
                         outFile.close()
                     except IOError as e:
                         print("I/O error({0.filename}):".format(e))
