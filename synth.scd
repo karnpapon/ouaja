@@ -15,7 +15,7 @@ s.waitForBoot{
 	var counter = 0;
 	var window_w = 960;
 	var mlp_cached_path = "";
-	var basename = 'webmaster_';
+	var basename = 'nano_';
 	var numChans = 2;
 	var lagtime = 0.1;
 

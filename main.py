@@ -16,7 +16,7 @@ load_dotenv()
 
 pygame.init()
 quit_app = False
-commands = queue.Queue()
+reply_answer = queue.Queue()
 
 WIDTH = 960
 HEIGHT = 540
@@ -79,7 +79,7 @@ CHARACTERS = {
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
-pygame.display.set_caption("PTK By @Karnpapon")
+pygame.display.set_caption("live-ghosting")
 bg = pygame.image.load(os.path.join("Images", "ghost-board2.png")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 coin = pygame.image.load(os.path.join("Images", "coin-sm-shadow2.png"))
@@ -139,18 +139,17 @@ def main():
     answer_index = 0
     timeout = FPS * TIMEOUT_FACTOR
     go_to_init_pos = False
-    # is_italic = False
     answer = ""
     current_answer = ""
 
     while not quit_app:
         try:
-            command = commands.get(False)
+            reply = reply_answer.get(False)
         except queue.Empty:
-            command = None
+            reply = None
 
-        if not command == None:
-            answer = command
+        if not reply == None:
+            answer = reply
             answer = answer.upper()
             to = pygame.Vector2(
                 CHARACTERS[answer[answer_index]][0], CHARACTERS[answer[answer_index]][1])
@@ -170,10 +169,8 @@ def main():
                 timeout = FPS * TIMEOUT_FACTOR
                 current_answer = ""
                 go_to_init_pos = False
-                # is_italic = bool(random.getrandbits(1))
             else:
                 current_answer += answer[answer_index].upper()
-                # is_italic = bool(random.getrandbits(1))
                 answer_index += 1
                 if answer_index < len(answer):
                     char = answer[answer_index].upper()
@@ -192,7 +189,7 @@ def main():
 
         ghost_msg = pygame.font.SysFont(
             "Argent Pixel CF", 85)
-        ghost_msg = ghost_msg.render(str(current_answer), True, RED)
+        ghost_msg = ghost_msg.render(str(current_answer), True, WHITE)
         WINDOW.blit(ghost_msg, (50, 125))
 
         if (answer):
@@ -210,11 +207,17 @@ class Input(threading.Thread):
     def run(self):
         while not quit_app:
             question = input()
-            question = USER + question.lower() + '\n'
-            # answer = ask(question)
-            mockup_ans = random.choice(["I'm a ghost", "oxygen", "zebra"])
-            commands.put(mockup_ans)
-            # print("commands: ", commands.get())
+            if question != "":
+                question = USER + question.lower() + '\n'
+                # answer = ask(question)
+                mockup_ans = random.choice(["I'm a ghost", "oxygen", "zebra"])
+                reply_answer.put(mockup_ans)
+                try:
+                    outFile = open('conversation.txt', 'a')
+                    outFile.write('Q:{}A:{}\n\n'.format(question, mockup_ans))
+                    outFile.close()
+                except IOError as e:
+                    print("I/O error({0.filename}):".format(e))
 
 
 if __name__ == "__main__":
