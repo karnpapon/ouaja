@@ -20,6 +20,7 @@ you can type these commands while the program is running
 
 # structures
 
+- `/app`, main program
 - `/dataset`, a pre-trained neural-network data for using in `synth.scd`
 - `synth.scd`, a synth engine ([`FluCoMa`](https://github.com/flucoma/flucoma-sc) lib is required)
 - `nano-setup.scd`, a setup for controlling SuperCollider fx chain params.
