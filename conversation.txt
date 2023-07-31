@@ -1,48 +1,9 @@
-Q:Person:who are you?
-A:I am a ghost.
+Q:how did you die?
+A: I never died.
 
-Q:Person:why you dead?
-A:I don't know.
+Q:but ghost is once a person, and person eventually die to become a ghost.
+A: I'm not a ghost.
 
-Q:Person:are you male or female?
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:ff
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:ff
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fff
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:gg
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fff
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fff
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fdsf
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fdsf
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fdsfd
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fdf
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fdsf
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fjsdkf
-A:I am a ghost, so I don't have a gender.
-
-Q:Person:fdsf
-A:I am a ghost, so I don't have a gender.
+Q:what are you then?
+A: Pretending to be a ghost.
 

@@ -6,7 +6,7 @@
 // fader[2]: HPF (dry/wet)            | knob[2]: hiBoost
 // fader[3]: sub (dry/wet)            | knob[3]: freq
 // fader[4]: grain(wet+grainsize)     | knob[4]: rand + feedback
-// fader[5]: *BROKEN*                 | knob[5]: *BROKEN*
+// fader[5]: -                        | knob[5]: -       
 // fader[6]: reverb  (dry/wet)        | knob[6]: time
 // fader[7]: shape (dry/wet)          | knob[7]: hi
 // fader[8]: -                        | knob[8]: -

@@ -49,15 +49,16 @@ class Input(threading.Thread):
                         # reply_answer.task_done()
 
                 else:
-                    question = const.USER + question.lower() + '\n'
-                    # answer = ask(question)
-                    mockup_ans = random.choice(
-                        ["I am a ghost, so I don't have a gender."])
-                    states.reply_answer.put(mockup_ans)
+                    # question = const.USER + question.lower() + '\n'
+                    question = question.lower() + '\n'
+                    answer = utils.ask(question)
+                    # mockup_ans = random.choice(
+                    #     ["I am a ghost, so I don't have a gender."])
+                    states.reply_answer.put(answer)
                     try:
                         outFile = open('conversation.txt', 'a')
                         outFile.write('Q:{}A:{}\n\n'.format(
-                            question, mockup_ans))
+                            question, answer))
                         outFile.close()
                     except IOError as e:
                         print("I/O error({0.filename}):".format(e))

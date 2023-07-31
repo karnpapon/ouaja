@@ -10,17 +10,17 @@ from . import const
 from .button import Button
 from . import arg
 from . import states
+from . import utils
 import openai
-from dotenv import load_dotenv
-load_dotenv()
 
 pygame.init()
-openai.api_key = os.getenv("OPENAI_API")
+# openai.api_key = os.getenv("OPENAI_API")
+# os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API")
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load(os.path.join("images", "ghost-board6.png")).convert()
+bg = pygame.image.load(os.path.join("images", "ghost-board7.png")).convert()
 bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
 logo = pygame.image.load(os.path.join("images", "logo.png")).convert()
 logo = pygame.transform.scale(logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
