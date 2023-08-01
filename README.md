@@ -2,7 +2,7 @@
 
 ouaja (วาจา, /waː˧.t͡ɕaː˧/ pronouced as 'waa-jaa', a Thai word for "speech" ), a tool for live (ghosting) performance.
 
-<img src="images/preview.png"/>
+<img src="img/preview.png"/>
 
 # usage
 

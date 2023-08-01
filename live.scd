@@ -10,3 +10,6 @@ r = Routine { arg inval;
 )
 
 r.stop
+
+s.meter
+s.plotTree

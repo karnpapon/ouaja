@@ -20,11 +20,11 @@ pygame.init()
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load(os.path.join("images", "ghost-board7.png")).convert()
+bg = pygame.image.load(os.path.join("img", "ghost-board7.png")).convert()
 bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
-logo = pygame.image.load(os.path.join("images", "logo.png")).convert()
+logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
 logo = pygame.transform.scale(logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
-coin = pygame.image.load(os.path.join("images", "coin-sm-shadow2.png")).convert_alpha()
+coin = pygame.image.load(os.path.join("img", "coin-sm-shadow2.png")).convert_alpha()
 
 clock = pygame.time.Clock()
 
