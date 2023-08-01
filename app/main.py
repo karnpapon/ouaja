@@ -10,12 +10,8 @@ from . import const
 from .button import Button
 from . import arg
 from . import states
-from . import utils
-import openai
 
 pygame.init()
-# openai.api_key = os.getenv("OPENAI_API")
-# os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API")
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT), pygame.NOFRAME)

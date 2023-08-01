@@ -3,6 +3,7 @@ import random
 import re
 from . import const
 from . import utils
+from . import model
 from . import states 
 
 class Input(threading.Thread):
@@ -51,7 +52,7 @@ class Input(threading.Thread):
                 else:
                     # question = const.USER + question.lower() + '\n'
                     question = question.lower() + '\n'
-                    answer = utils.ask(question)
+                    answer = model.ask(question)
                     # mockup_ans = random.choice(
                     #     ["I am a ghost, so I don't have a gender."])
                     states.reply_answer.put(answer)
