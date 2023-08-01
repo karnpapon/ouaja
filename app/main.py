@@ -10,6 +10,7 @@ from . import const
 from .button import Button
 from . import arg
 from . import states
+from . import transitions
 
 pygame.init()
 
@@ -22,7 +23,9 @@ logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
 logo = pygame.transform.scale(logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
 coin = pygame.image.load(os.path.join("img", "coin-sm-shadow2.png")).convert_alpha()
 
+transitions.init(WINDOW, const.WIDTH, const.HEIGHT, [255,0,0])
 clock = pygame.time.Clock()
+
 
 class Pointer(object):
     def __init__(self, x, y, color):
@@ -167,6 +170,7 @@ def start():
 
 
 def main():
+   
     while not states.quit_app:
 
         # WINDOW.blit(logo, ((WIDTH/2) - logo.get_width() / 2, (HEIGHT/4) - logo.get_height() / 2))
@@ -190,15 +194,22 @@ def main():
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                states.quit_app = True
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    start()
+                    transitions.run("fadeOut") 
+                    states.should_start = True
                 # if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
                 #     options()
                 # if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                 #     pygame.quit()
                 #     sys.exit()
+
+        if transitions.updateScreen() == False:
+            if states.should_start:
+                transitions.run("fadeIn") 
+                start()
 
         pygame.display.update()
