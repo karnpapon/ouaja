@@ -1,11 +1,13 @@
 {
   "[python]": {
-    "editor.defaultFormatter": "ms-python.autopep8",
+    // "editor.defaultFormatter": "ms-python.autopep8",
     "editor.formatOnSave": false
-  },
-  "python.formatting.provider": "none",
-  "[supercollider]": {
-    "editor.formatOnSave": false
-  },
-  "editor.tabSize": 4,
+},
+    // "python.formatting.autopep8Args": ["--ignore", "E402"],
+    // "python.formatting.provider": "none",
+    "[supercollider]": {
+        "editor.formatOnSave": false
+    },
+    "editor.tabSize": 4,
+    "python.languageServer": "Pylance",
 }

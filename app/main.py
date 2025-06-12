@@ -1,31 +1,90 @@
+from . import transitions
+from . import states
+from . import arg
+from .button import Button
+from . import const
+from . import pyganim
+from easing_functions import *
+from pygame.locals import *
+import queue
+import pygame
 import sys
 import os
+
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
-import pygame
-import queue
-from pygame.locals import *
-from easing_functions import *
-from . import const
-from .button import Button
-from . import arg
-from . import states
-from . import transitions
 
 pygame.init()
+WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+
+frame_1 = pygame.image.load("assets/sprites/soul/soul_1.png").convert_alpha()
+frame_2 = pygame.image.load("assets/sprites/soul/soul_2.png").convert_alpha()
+frame_3 = pygame.image.load("assets/sprites/soul/soul_3.png").convert_alpha()
+frame_4 = pygame.image.load("assets/sprites/soul/soul_4.png").convert_alpha()
+frame_5 = pygame.image.load("assets/sprites/soul/soul_5.png").convert_alpha()
+frame_6 = pygame.image.load("assets/sprites/soul/soul_6.png").convert_alpha()
+frame_7 = pygame.image.load("assets/sprites/soul/soul_7.png").convert_alpha()
+frame_8 = pygame.image.load("assets/sprites/soul/soul_8.png").convert_alpha()
+
+spriteAnim = pyganim.PygAnimation([(frame_1, 0.1),
+                                 (frame_2, 0.1),
+                                 (frame_3, 0.1),
+                                 (frame_4, 0.1),
+                                 (frame_5, 0.1),
+                                 (frame_6, 0.1),
+                                 (frame_7, 0.1),
+                                 (frame_8, 0.1)])
+spriteAnim.scale((frame_1.get_width() * 5, frame_1.get_height() * 5)) 
+spriteAnim.play() 
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
-WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("live-ghosting")
 bg = pygame.image.load(os.path.join("img", "ghost-board7.png")).convert()
 bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
 logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
-logo = pygame.transform.scale(logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
-coin = pygame.image.load(os.path.join("img", "coin-sm-shadow2.png")).convert_alpha()
+logo = pygame.transform.scale(
+    logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
+coin = pygame.image.load(os.path.join(
+    "img", "coin-sm-shadow2.png")).convert_alpha()
 
-transitions.init(WINDOW, const.WIDTH, const.HEIGHT, [255,0,0])
+transitions.init(WINDOW, const.WIDTH, const.HEIGHT)
 clock = pygame.time.Clock()
 
+padding = 20
+
+small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
+
+# bg_color = (176, 174, 167) #B0AEA7
+# text_color = (49, 47, 40) #312F28
+# text_lightest_color = (125,120,102) #7D7866
+
+bg_color = (0, 0, 0) #B0AEA7
+text_color = (255, 0, 0) #312F28
+text_lightest_color = (255,255,255) #7D7866
+
+font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
+
+# Board layout data
+letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 "
+# positions = []
+
+# Layout constants
+start_x = 50
+start_y = 200
+spacing = 28
+row_spacing = 60
+
+def draw_border(screen: pygame.Surface, tile, screen_width, screen_height, tile_size):
+    # Top and Bottom
+    for x in range(0, screen_width, tile_size):
+        screen.blit(tile, (x, 0))  # Top
+        screen.blit(tile, (x, screen_height - tile_size))  # Bottom
+
+    # Left and Right
+    for y in range(0, screen_height, tile_size):
+        screen.blit(tile, (0, y))  # Left
+        screen.blit(tile, (screen_width - tile_size, y))  # Right
 
 class Pointer(object):
     def __init__(self, x, y, color):
@@ -36,8 +95,10 @@ class Pointer(object):
         self.friction = 0.95
 
     def Draw(self, surface):
-        surface.blit(coin, (self.position.x - coin.get_width() /
+        spriteAnim.blit(WINDOW, (self.position.x - coin.get_width() /
                      2, self.position.y - coin.get_height() / 2))
+        # surface.blit(coin, (self.position.x - coin.get_width() /
+        #              2, self.position.y - coin.get_height() / 2))
 
     def Move(self, to: pygame.Vector2):
         target = to
@@ -47,19 +108,24 @@ class Pointer(object):
             self.acceleration.x * dir.normalize().x
         self.velocity.y = self.velocity.y * self.friction + \
             self.acceleration.y * dir.normalize().y
-        self.velocity.x = max(-const.MAX_SPEED, min(const.MAX_SPEED, self.velocity.x))
-        self.velocity.y = max(-const.MAX_SPEED, min(const.MAX_SPEED, self.velocity.y))
+        self.velocity.x = max(-const.MAX_SPEED,
+                              min(const.MAX_SPEED, self.velocity.x))
+        self.velocity.y = max(-const.MAX_SPEED,
+                              min(const.MAX_SPEED, self.velocity.y))
 
         self.position.x += self.velocity.x
         self.position.y += self.velocity.y
 
+
 def get_font(size):
-    return pygame.font.SysFont("Argent Pixel CF", size)
+    return pygame.font.Font("assets/fonts/NicerNightie.ttf", size)
 
 # draw some text into an area of a surface
 # automatically wraps words
 # returns any text that didn't get blitted
 # https://www.pygame.org/wiki/TextWrap
+
+
 def draw_text(surface, text, color, rect, font, aa=False, bkg=None):
     rect = pygame.Rect(rect)
     y = rect.top
@@ -79,8 +145,8 @@ def draw_text(surface, text, color, rect, font, aa=False, bkg=None):
         while font.size(text[:i])[0] < rect.width and i < len(text):
             i += 1
 
-        # if we've wrapped the text, then adjust the wrap to the last word      
-        if i < len(text): 
+        # if we've wrapped the text, then adjust the wrap to the last word
+        if i < len(text):
             i = text.rfind(" ", 0, i) + 1
 
         # render the line and blit it to the surface
@@ -98,7 +164,9 @@ def draw_text(surface, text, color, rect, font, aa=False, bkg=None):
 
     return text
 
+
 pointer = Pointer(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
+
 
 def start():
     answer_index = 0
@@ -106,6 +174,7 @@ def start():
     go_to_init_pos = False
     answer = ""
     current_answer = ""
+    # transitions.run("fadeIn")
 
     while not states.quit_app:
         try:
@@ -119,12 +188,14 @@ def start():
             to = pygame.Vector2(
                 const.CHARACTERS[answer[answer_index]][0], const.CHARACTERS[answer[answer_index]][1])
 
-        WINDOW.blit(bg, (0, 0))
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
 
+        # WINDOW.blit(bg, (0, 0))
+        WINDOW.fill(bg_color)
+        # if transitions.updateScreen() == False:
         if answer_index <= len(answer) and answer:
             if pointer.position.distance_to(to) < 15 + 15:
                 timeout -= 1
@@ -152,10 +223,27 @@ def start():
             # current_answer = ""
             timeout = const.FPS * const.TIMEOUT_FACTOR
 
-        ghost_msg = pygame.font.SysFont(
-            "Argent Pixel CF", 50)
+        ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 50)
         ghost_msg = ghost_msg.render(str(current_answer), True, const.WHITE)
-        draw_text(WINDOW, current_answer, const.WHITE, [70, 105, 805, 78*4],pygame.font.SysFont("Argent Pixel CF", 50))
+
+        # Draw "YES" and "NO"
+        yes_text = font.render("Yes", True, text_color)
+        no_text = font.render("No", True, text_color)
+        WINDOW.blit(yes_text, (70, 50))
+        WINDOW.blit(no_text, (800, 50))
+
+        # Draw "GOODBYE"
+        # goodbye_text = font.render("GOODBYE", True, text_color)
+        # WINDOW.blit(goodbye_text, (320, 500))
+
+        for _, letter in enumerate(letters):
+            display_letter = letter.lower() if letter.isalpha() else letter
+            text = small_font.render(f"{display_letter}", True, text_color)
+            pos = const.CHARACTERS[letter]
+            WINDOW.blit(text, pos)
+
+        draw_text(WINDOW, "I'm an Ocean, I'm a Sea, I'm a Nowhere but here..! I'm an Ocean, I'm a Sea", const.RED, [
+                  70, 110, 805, 78*4], pygame.font.Font("assets/fonts/NicerNightie.ttf", 50))
 
         if (answer):
             pointer.Move(to)
@@ -168,9 +256,8 @@ def start():
         clock.tick(const.FPS)
 
 
-
 def main():
-   
+
     while not states.quit_app:
 
         # WINDOW.blit(logo, ((WIDTH/2) - logo.get_width() / 2, (HEIGHT/4) - logo.get_height() / 2))
@@ -179,19 +266,20 @@ def main():
         # MENU_TEXT = get_font(100).render("MAIN MENU", True, "#b68f40")
         # MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
 
-        PLAY_BUTTON = Button(image=logo, pos=( (const.WIDTH/2) - 20, (const.HEIGHT/2) - 20 ), 
-                            text_input="", font=get_font(70), base_color="#d7fcd4", hovering_color="White")
-        # OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(640, 400), 
+        PLAY_BUTTON = Button(image=logo, pos=((const.WIDTH/2) - 20, (const.HEIGHT/2) - 20),
+                             text_input="", font=get_font(70), base_color="#d7fcd4", hovering_color="White")
+        # OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(640, 400),
         #                     text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-        # QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 550), 
+        # QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 550),
         #                     text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
 
         # WINDOW.blit(MENU_TEXT, MENU_RECT)
+        WINDOW.fill(bg_color)
 
         for button in [PLAY_BUTTON]:
             button.changeColor(MENU_MOUSE_POS)
             button.update(WINDOW)
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 states.quit_app = True
@@ -199,7 +287,7 @@ def main():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    transitions.run("fadeOut") 
+                    transitions.run("fadeOut")
                     states.should_start = True
                 # if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
                 #     options()
@@ -209,7 +297,6 @@ def main():
 
         if transitions.updateScreen() == False:
             if states.should_start:
-                transitions.run("fadeIn") 
                 start()
 
         pygame.display.update()

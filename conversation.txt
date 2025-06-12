@@ -60,5 +60,3 @@ A: Fear of death.
 
 Q:ok bye
 A: Mysterious. Eerie.Q:who are you?
-A: I'm a haunted spirit.
-

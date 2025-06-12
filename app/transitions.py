@@ -101,7 +101,7 @@ def updateScreen():
 				transition_data.screen.set_alpha(255-255*(time_ratio* 1.25))
 				transition_data.current_screen = transition_data.screen
 			elif transition == "fadeIn":
-				transition_data.screen.set_alpha(255*time_ratio*1.25)
+				transition_data.screen.set_alpha(255*time_ratio)
 				transition_data.current_screen = transition_data.screen
 
 			rect2 = transition_data.current_screen.get_rect()
