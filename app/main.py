@@ -8,6 +8,7 @@ from easing_functions import *
 from pygame.locals import *
 import queue
 import pygame
+import pygame_textinput
 import sys
 import os
 
@@ -18,15 +19,10 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 pygame.init()
 WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
 
-center_x = (WINDOW.get_width() - const.WIDTH) // 2
-center_y = (WINDOW.get_height() - const.HEIGHT) // 2
-
-game_area = pygame.Rect(
-    40,
-    40,
-    WINDOW.get_width(),
-    WINDOW.get_height()
-)
+# Create TextInput-object
+font_input = pygame.font.Font("assets/fonts/NicerNightie.ttf", 55)
+textinput = pygame_textinput.TextInputVisualizer(font_object=font_input)
+textinput.font_color = (255, 0, 0)
 
 def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
     surface_rect = surface.get_rect()
@@ -145,7 +141,7 @@ def slice_nine(image: pygame.Surface, tile_size):
     }
 
 
-def draw_nine_slice_scaled(slices, surface, rect, tile_size, scale):
+def draw_nine_slice_scaled(slices, surface: pygame.Surface, rect, tile_size, scale):
     x, y, w, h = rect
     s = tile_size * scale
 
@@ -282,8 +278,22 @@ def start():
     nine = slice_nine(border_image, tile_size)
     panel_rect = pygame.Rect(0, 0, WINDOW.get_width(), WINDOW.get_height())
 
+    border_image_2 = pygame.image.load("assets/ui/hexany/Panels/Transparent/weathered_temple.png").convert_alpha()
+    nine_2 = slice_nine(border_image_2, tile_size)
+    msg_box_w = WINDOW.get_width() // 2
+    msg_box_h = WINDOW.get_height() // 6
+    panel_input_msg_box_rect = pygame.Rect(
+        WINDOW.get_width() / 2 - (msg_box_w / 2),
+        WINDOW.get_height() - (msg_box_h / 2),
+        msg_box_w,
+        msg_box_h
+    )
+
     for key in nine:
         nine[key] = tint_surface(nine[key], (255, 0, 0))
+
+    for key in nine_2:
+        nine_2[key] = tint_surface(nine_2[key], (255, 0, 0))
 
     while not states.quit_app:
         try:
@@ -297,7 +307,10 @@ def start():
             to = pygame.Vector2(
                 const.CHARACTERS[answer[answer_index]][0], const.CHARACTERS[answer[answer_index]][1])
 
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        textinput.update(events)
+
+        for event in events:
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
@@ -385,8 +398,16 @@ def start():
         pointer.Draw(ouija_pos)
         arg.client.send_message(
             "/synth_coord", [pointer.position.x / const.WIDTH, 1.0 - pointer.position.y / const.HEIGHT])
+        
+
+        panel_input_msg_box_rect.width = WINDOW.get_width() / 2 
+        panel_input_msg_box_rect.x = (WINDOW.get_width() / 2 - ouija_pos[0]) - 90
+        panel_input_msg_box_rect.y = WINDOW.get_height() - ouija_pos[1]
+
+        WINDOW.blit(textinput.surface, (panel_input_msg_box_rect.x, panel_input_msg_box_rect.y + 20))
 
         draw_nine_slice_scaled(nine, WINDOW, panel_rect, tile_size, 2)
+        draw_nine_slice_scaled(nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
         pygame.display.update()
         clock.tick(const.FPS)
