@@ -18,6 +18,23 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 pygame.init()
 WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
 
+center_x = (WINDOW.get_width() - const.WIDTH) // 2
+center_y = (WINDOW.get_height() - const.HEIGHT) // 2
+
+game_area = pygame.Rect(
+    40,
+    40,
+    WINDOW.get_width(),
+    WINDOW.get_height()
+)
+
+def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
+    surface_rect = surface.get_rect()
+    return (
+        (surface_rect.width - screen_size[0]) // 2,
+        (surface_rect.height - screen_size[1]) // 2
+    )
+
 frame_1 = pygame.image.load("assets/sprites/soul/soul_1.png").convert_alpha()
 frame_2 = pygame.image.load("assets/sprites/soul/soul_2.png").convert_alpha()
 frame_3 = pygame.image.load("assets/sprites/soul/soul_3.png").convert_alpha()
@@ -173,10 +190,10 @@ class Pointer(object):
         self.acceleration = pygame.Vector2(0.5, 0.5)
         self.friction = 0.95
 
-    def Draw(self):
+    def Draw(self,ouija_pos):
         spriteAnim.blit(WINDOW, (
-            ( self.position.x - coin.get_width() / 2 ) + 10, 
-            ( self.position.y - coin.get_height() / 2 )
+            (( self.position.x - coin.get_width() / 2 ) + 10) + ouija_pos[0], 
+            (( self.position.y - coin.get_height() / 2 ) + ouija_pos[1])
         ))
 
     def Move(self, to: pygame.Vector2):
@@ -259,9 +276,8 @@ def start():
     go_to_init_pos = False
     answer = ""
     current_answer = ""
-    # transitions.run("fadeIn")
 
-    border_image = pygame.image.load("assets/ui/hexany/Panels/Transparent/polis_sanctuary.png").convert_alpha()
+    border_image = pygame.image.load("assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
     tile_size = 32
     nine = slice_nine(border_image, tile_size)
     panel_rect = pygame.Rect(0, 0, WINDOW.get_width(), WINDOW.get_height())
@@ -292,6 +308,7 @@ def start():
                        pygame.display.set_mode((const.WIDTH, const.HEIGHT))
                     else:
                        pygame.display.set_mode((0,0),pygame.FULLSCREEN)
+                    panel_rect = pygame.Rect(0, 0, WINDOW.get_width(), WINDOW.get_height())
 
         # WINDOW.blit(bg, (0, 0))
         WINDOW.fill(bg_color)
@@ -316,11 +333,11 @@ def start():
                     if const.CHARACTERS.get(char):
                         to = pygame.Vector2(
                             const.CHARACTERS[char][0], const.CHARACTERS[char][1])
-                        
-                        
                 else:
                     go_to_init_pos = True
 
+        ouija_pos = get_center_position(WINDOW, (const.WIDTH, const.HEIGHT))
+    
         if go_to_init_pos and to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
             answer_index = 0
             to = pygame.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y)
@@ -333,12 +350,12 @@ def start():
         # Draw "YES" and "NO"
         yes_text = font.render("Yes", True, text_color)
         no_text = font.render("No", True, text_color)
-        WINDOW.blit(yes_text, (70, 50))
-        WINDOW.blit(no_text, (240, 50))
+        WINDOW.blit(yes_text, (70+ouija_pos[0], 50+ouija_pos[1]))
+        WINDOW.blit(no_text, (240+ouija_pos[0], 50+ouija_pos[1]))
 
         # Draw "GOODBYE"
         goodbye_text = font.render("Goodbye", True, text_color)
-        WINDOW.blit(goodbye_text, (700, 50))
+        WINDOW.blit(goodbye_text, (700+ouija_pos[0], 50+ ouija_pos[1]))
 
         for _, letter in enumerate(letters):
             if letter == " ":
@@ -346,14 +363,14 @@ def start():
             else:
                 display_letter = letter.lower() if letter.isalpha() else letter
             text = small_font.render(f"{display_letter}", True, text_color)
-            pos = const.CHARACTERS[letter]
+            pos = [const.CHARACTERS[letter][0] + ouija_pos[0], const.CHARACTERS[letter][1] + ouija_pos[1]]
             WINDOW.blit(text, pos)
 
         draw_text(
             WINDOW,
             current_answer.title(),  # Capitalize each word
             const.RED,
-            [70, 140, 805, 78*4],
+            [70 + ouija_pos[0], 140+ouija_pos[1], 805, 78*4],
             pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
         )
 
@@ -361,11 +378,11 @@ def start():
             pointer.Move(to)
             if answer_index > 0:
                 fx_swirl.blit(WINDOW, (
-                    ( const.CHARACTERS[answer[answer_index - 1]][0] - swirl_fx_1.get_width() / 2 ) + 10,
-                    (const.CHARACTERS[answer[answer_index - 1]][1] - swirl_fx_1.get_height() / 2) + 10
+                    (( const.CHARACTERS[answer[answer_index - 1]][0] - swirl_fx_1.get_width() / 2 ) + 10) + ouija_pos[0],
+                    ((const.CHARACTERS[answer[answer_index - 1]][1] - swirl_fx_1.get_height() / 2) + 10) + ouija_pos[1]
                 ))
 
-        pointer.Draw()
+        pointer.Draw(ouija_pos)
         arg.client.send_message(
             "/synth_coord", [pointer.position.x / const.WIDTH, 1.0 - pointer.position.y / const.HEIGHT])
 
@@ -374,11 +391,6 @@ def start():
         pygame.display.update()
         clock.tick(const.FPS)
 
-def toggle_fullscreen(current_screen, is_fullscreen, width, height):
-    if is_fullscreen:
-        return pygame.display.set_mode((width, height)), False
-    else:
-        return pygame.display.set_mode((0,0),pygame.FULLSCREEN), True
 
 def main():
     while not states.quit_app:
