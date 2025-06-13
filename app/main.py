@@ -114,6 +114,46 @@ start_y = 200
 spacing = 28
 row_spacing = 60
 
+def slice_nine(image: pygame.Surface, tile_size):
+    return {
+        "tl": image.subsurface((0, 0, tile_size, tile_size)),
+        "t": image.subsurface((tile_size, 0, tile_size, tile_size)),
+        "tr": image.subsurface((tile_size * 2, 0, tile_size, tile_size)),
+        "l": image.subsurface((0, tile_size, tile_size, tile_size)),
+        "c": image.subsurface((tile_size, tile_size, tile_size, tile_size)),
+        "r": image.subsurface((tile_size * 2, tile_size, tile_size, tile_size)),
+        "bl": image.subsurface((0, tile_size * 2, tile_size, tile_size)),
+        "b": image.subsurface((tile_size, tile_size * 2, tile_size, tile_size)),
+        "br": image.subsurface((tile_size * 2, tile_size * 2, tile_size, tile_size)),
+    }
+
+
+def draw_nine_slice_scaled(slices, surface, rect, tile_size, scale):
+    x, y, w, h = rect
+    s = tile_size * scale
+
+    # Corners
+    surface.blit(pygame.transform.scale(slices["tl"], (s, s)), (x, y))
+    surface.blit(pygame.transform.scale(slices["tr"], (s, s)), (x + w - s, y))
+    surface.blit(pygame.transform.scale(slices["bl"], (s, s)), (x, y + h - s))
+    surface.blit(pygame.transform.scale(slices["br"], (s, s)), (x + w - s, y + h - s))
+
+    # Top/Bottom
+    for i in range(x + s, x + w - s, s):
+        surface.blit(pygame.transform.scale(slices["t"], (s, s)), (i, y))
+        surface.blit(pygame.transform.scale(slices["b"], (s, s)), (i, y + h - s))
+
+    # Left/Right
+    for j in range(y + s, y + h - s, s):
+        surface.blit(pygame.transform.scale(slices["l"], (s, s)), (x, j))
+        surface.blit(pygame.transform.scale(slices["r"], (s, s)), (x + w - s, j))
+
+    # Center
+    for i in range(x + s, x + w - s, s):
+        for j in range(y + s, y + h - s, s):
+            surface.blit(pygame.transform.scale(slices["c"], (s, s)), (i, j))
+
+
 def draw_border(screen: pygame.Surface, tile, screen_width, screen_height, tile_size):
     # Top and Bottom
     for x in range(0, screen_width, tile_size):
@@ -207,6 +247,12 @@ def draw_text(surface, text, color, rect, font, aa=False, bkg=None):
 pointer = Pointer(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
 
 
+def tint_surface(surface: pygame.Surface, tint_color):
+    """Apply a color tint to a white image with transparency."""
+    tinted = surface.copy()
+    tinted.fill(tint_color, special_flags=pygame.BLEND_RGBA_MULT)
+    return tinted
+
 def start():
     answer_index = 0
     timeout = const.FPS * const.TIMEOUT_FACTOR
@@ -214,6 +260,14 @@ def start():
     answer = ""
     current_answer = ""
     # transitions.run("fadeIn")
+
+    border_image = pygame.image.load("assets/ui/hexany/Panels/Transparent/polis_sanctuary.png").convert_alpha()
+    tile_size = 32
+    nine = slice_nine(border_image, tile_size)
+    panel_rect = pygame.Rect(0, 0, WINDOW.get_width(), WINDOW.get_height())
+
+    for key in nine:
+        nine[key] = tint_surface(nine[key], (255, 0, 0))
 
     while not states.quit_app:
         try:
@@ -231,6 +285,13 @@ def start():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_f and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    states.is_fullscreen = not states.is_fullscreen
+                    if states.is_fullscreen:
+                       pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+                    else:
+                       pygame.display.set_mode((0,0),pygame.FULLSCREEN)
 
         # WINDOW.blit(bg, (0, 0))
         WINDOW.fill(bg_color)
@@ -308,16 +369,22 @@ def start():
         arg.client.send_message(
             "/synth_coord", [pointer.position.x / const.WIDTH, 1.0 - pointer.position.y / const.HEIGHT])
 
+        draw_nine_slice_scaled(nine, WINDOW, panel_rect, tile_size, 2)
+
         pygame.display.update()
         clock.tick(const.FPS)
 
+def toggle_fullscreen(current_screen, is_fullscreen, width, height):
+    if is_fullscreen:
+        return pygame.display.set_mode((width, height)), False
+    else:
+        return pygame.display.set_mode((0,0),pygame.FULLSCREEN), True
 
 def main():
-
     while not states.quit_app:
 
         # WINDOW.blit(logo, ((WIDTH/2) - logo.get_width() / 2, (HEIGHT/4) - logo.get_height() / 2))
-        MENU_MOUSE_POS = pygame.mouse.get_pos()
+        # MENU_MOUSE_POS = pygame.mouse.get_pos()
 
         # MENU_TEXT = get_font(100).render("MAIN MENU", True, "#b68f40")
         # MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
@@ -336,12 +403,17 @@ def main():
         #     button.changeColor(MENU_MOUSE_POS)
         #     button.update(WINDOW)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                states.quit_app = True
-                pygame.quit()
-                sys.exit()
-            # if event.type == pygame.MOUSEBUTTONDOWN:
+        # for event in pygame.event.get():
+            # if event.type == pygame.QUIT:
+            #     states.quit_app = True
+            #     pygame.quit()
+            #     sys.exit()
+            # elif event.type == pygame.KEYDOWN: 
+                # if event.mod == pygame.KMOD_CTRL:
+                    # if event.key == pygame.K_f:
+                        # print(">>>>>>>>>>> fullscreen")
+                        # screen, is_fullscreen = toggle_fullscreen(WINDOW, is_fullscreen, const.WIDTH, const.HEIGHT)
+                # if event.type == pygame.MOUSEBUTTONDOWN:
             #     if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
             #         transitions.run("fadeOut")
             #         states.should_start = True
