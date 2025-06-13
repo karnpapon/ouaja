@@ -52,7 +52,8 @@ class Input(threading.Thread):
                 else:
                     # question = const.USER + question.lower() + '\n'
                     question = question.lower() + '\n'
-                    answer = model.ask(question)
+                    answer = "Are You Ready???????"
+                    # answer = model.ask(question)
                     # mockup_ans = random.choice(
                     #     ["I am a ghost, so I don't have a gender."])
                     states.reply_answer.put(answer)

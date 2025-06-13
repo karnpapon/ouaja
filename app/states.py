@@ -1,6 +1,6 @@
 import queue
 
 quit_app = False
-should_start = False
+should_start = True
 level_loaded = False
 reply_answer = queue.Queue()
