@@ -13,6 +13,7 @@ import pygame
 import pygame_textinput
 import sys
 import os
+import random
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
@@ -407,7 +408,7 @@ def start():
         current_answer = ""
         go_to_init_pos = False
       else:
-        current_answer += answer[answer_index].upper()
+        current_answer += random.choice([answer[answer_index].upper(), answer[answer_index].lower()])
         answer_index += 1
         # print(current_answer)
         fx_swirl.play()
@@ -453,7 +454,9 @@ def start():
 
     draw_text(
         WINDOW,
-        current_answer.title(),  # Capitalize each word
+        # current_answer.title(),  # Capitalize each word
+        current_answer,  # Capitalize each word
+        # "".join(random.choice([c.upper(), c.lower()]) for c in current_answer),
         const.RED,
         [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
         pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
