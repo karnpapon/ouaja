@@ -366,8 +366,9 @@ def start():
                   states.abort = True
                   go_to_init_pos = True
               elif cmd[0] == "::BYE":
-                answer = ""
+                answer = " "
                 states.reply_answer.empty()
+                states.abort = False
                 if ouija_pos is not None:
                   to = pygame.Vector2(700+ouija_pos[0], 50 + ouija_pos[1])
                 # pygame.quit()
