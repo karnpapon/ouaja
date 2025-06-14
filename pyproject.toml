@@ -11,6 +11,7 @@ dependencies = [
     "langchain-community>=0.3.25",
     "openai>=1.86.0",
     "pygame>=2.6.1",
+    "pygame-render>=1.4.0",
     "pygame-textinput>=1.0.1",
     "python-osc>=1.9.3",
 ]

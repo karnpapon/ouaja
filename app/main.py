@@ -11,6 +11,7 @@ from pygame.locals import *
 import queue
 import pygame
 import pygame_textinput
+from pygame_render import RenderEngine
 import sys
 import os
 import random
@@ -27,6 +28,9 @@ textinput = pygame_textinput.TextInputVisualizer(font_object=font_input)
 textinput.font_color = (255, 0, 0)
 textinput.cursor_width = 2
 # textinput.cursor_blink_interval = 1000
+
+# engine = RenderEngine(const.WIDTH, const.HEIGHT)
+# shader_glow = engine.load_shader_from_path('assets/shaders/vertex.glsl', 'assets/shaders/default.glsl')
 
 def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
   surface_rect = surface.get_rect()
@@ -98,6 +102,7 @@ fx_swirl.scale((swirl_fx_1.get_width() * 1, swirl_fx_1.get_height() * 1))
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 pygame.display.set_caption("live-ghosting")
 bg = pygame.image.load("assets/imgs/network-pixelated2.png")
+# tex = engine.surface_to_texture(bg)
 # bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
 logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
 logo = pygame.transform.scale(
@@ -279,6 +284,7 @@ def start():
   answer = ""
   current_answer = ""
   ouija_pos = None
+  total_time = 0
 
   border_image = pygame.image.load(
       "assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
@@ -487,6 +493,12 @@ def start():
     draw_nine_slice_scaled(
         nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
+    # Clear the screen
+    # engine.clear(64, 128, 64)
+    # total_time += clock.get_time()
+    # shader_glow['time'] = total_time
+    # engine.render(tex, engine.screen, scale=16., shader=shader_glow)
+
     pygame.display.update()
     clock.tick(const.FPS)
 
@@ -537,4 +549,4 @@ def main():
     if states.should_start:
       start()
 
-  pygame.display.update()
+  # pygame.display.update()
