@@ -96,8 +96,8 @@ fx_swirl.scale((swirl_fx_1.get_width() * 1, swirl_fx_1.get_height() * 1))
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load(os.path.join("img", "ghost-board7.png")).convert()
-bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
+bg = pygame.image.load("assets/imgs/network-pixelated2.png")
+# bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
 logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
 logo = pygame.transform.scale(
     logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
@@ -362,15 +362,13 @@ def start():
               #         print(
               #             "your VELOCITY index is not correct or maybe out of range.")
               elif cmd[0] == "::STOP":
-                if ouija_pos is not None:
-                  states.abort = True
-                  go_to_init_pos = True
+                states.abort = True
+                go_to_init_pos = True
               elif cmd[0] == "::BYE":
                 answer = " "
                 states.reply_answer.empty()
                 states.abort = False
-                if ouija_pos is not None:
-                  to = pygame.Vector2(700+ouija_pos[0], 50 + ouija_pos[1])
+                to = pygame.Vector2(700, 50)
                 # pygame.quit()
                 # sys.exit()
               # elif cmd[0] == "::BREAK":
@@ -396,8 +394,8 @@ def start():
               # except IOError as e:
               #     print("I/O error({0.filename}):".format(e))
 
-    # WINDOW.blit(bg, (0, 0))
     WINDOW.fill(bg_color)
+    
     # if transitions.updateScreen() == False:
     if answer_index <= len(answer) and answer:
       if pointer.position.distance_to(to) < 15 + 15:
@@ -423,7 +421,7 @@ def start():
           go_to_init_pos = True
 
     ouija_pos = get_center_position(WINDOW, (const.WIDTH, const.HEIGHT))
-
+    WINDOW.blit(bg, (0+ouija_pos[0], 0+ouija_pos[1]))
     if go_to_init_pos and to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
       answer_index = 0
       to = pygame.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y)
@@ -457,7 +455,7 @@ def start():
         WINDOW,
         current_answer.title(),  # Capitalize each word
         const.RED,
-        [70 + ouija_pos[0], 140+ouija_pos[1], 805, 78*4],
+        [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
         pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
     )
 
