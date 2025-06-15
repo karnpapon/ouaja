@@ -476,10 +476,7 @@ def start():
       else:
         current_answer += random.choice([answer[answer_index].upper(), answer[answer_index].lower()])
         answer_index += 1
-        # print(current_answer)
         fx_swirl.play()
-
-        # TODO: send OSC shot 
         arg.client.send_message("/synth_shot", [])
 
         if answer_index < len(answer):
@@ -570,49 +567,7 @@ def start():
 
 
 def main():
-  # while not states.quit_app:
-    # WINDOW.blit(logo, ((WIDTH/2) - logo.get_width() / 2, (HEIGHT/4) - logo.get_height() / 2))
-    # MENU_MOUSE_POS = pygame.mouse.get_pos()
-
-    # MENU_TEXT = get_font(100).render("MAIN MENU", True, "#b68f40")
-    # MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
-
-    # PLAY_BUTTON = Button(pos=((const.WIDTH/2) - 20, (const.HEIGHT/2) - 20),
-    #                      text_input="Ouaja", font=get_font(70), base_color="#d7fcd4", hovering_color="White")
-    # OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(640, 400),
-    #                     text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-    # QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 550),
-    #                     text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-
-    # WINDOW.blit(MENU_TEXT, MENU_RECT)
   WINDOW.fill(bg_color)
-
-  # for button in [PLAY_BUTTON]:
-  #     button.changeColor(MENU_MOUSE_POS)
-  #     button.update(WINDOW)
-
-  # for event in pygame.event.get():
-  # if event.type == pygame.QUIT:
-  #     states.quit_app = True
-  #     pygame.quit()
-  #     sys.exit()
-  # elif event.type == pygame.KEYDOWN:
-  # if event.mod == pygame.KMOD_CTRL:
-  # if event.key == pygame.K_f:
-  # print(">>>>>>>>>>> fullscreen")
-  # screen, is_fullscreen = toggle_fullscreen(WINDOW, is_fullscreen, const.WIDTH, const.HEIGHT)
-  # if event.type == pygame.MOUSEBUTTONDOWN:
-  #     if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-  #         transitions.run("fadeOut")
-  #         states.should_start = True
-  # if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
-  #     options()
-  # if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
-  #     pygame.quit()
-  #     sys.exit()
-
   if transitions.updateScreen() == False:
     if states.should_start:
       start()
-
-  # pygame.display.update()
