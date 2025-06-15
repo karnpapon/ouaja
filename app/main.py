@@ -106,7 +106,7 @@ start_y = 200
 spacing = 28
 row_spacing = 60
 
-class Pointer(object):
+class Entity(object):
   def __init__(self, x, y, color):
     self.color = color
     self.position = pygame.Vector2(x, y)
@@ -137,7 +137,7 @@ class Pointer(object):
     self.position.y += self.velocity.y
 
 
-pointer = Pointer(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
+entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
 
 def start():
   answer_index = 0
@@ -267,7 +267,7 @@ def start():
     
     # if transitions.updateScreen() == False:
     if answer_index <= len(answer) and answer:
-      if pointer.position.distance_to(to) < 15 + 15:
+      if entity.position.distance_to(to) < 15 + 15:
         timeout -= 1
 
     if timeout == 0:
@@ -332,7 +332,7 @@ def start():
     )
 
     if (answer):
-      pointer.Move(to)
+      entity.Move(to)
       if answer_index > 0:
         fx_swirl.blit(WINDOW, (
             ((const.CHARACTERS[answer[answer_index - 1]][0] -
@@ -341,9 +341,9 @@ def start():
              swirl_fx_frames[0].get_height() / 2) + 10) + ouija_pos[1]
         ))
 
-    pointer.Draw(ouija_pos)
+    entity.Draw(ouija_pos)
     arg.client.send_message(
-        "/synth_coord", [pointer.position.x / const.WIDTH, 1.0 - pointer.position.y / const.HEIGHT])
+        "/synth_coord", [entity.position.x / const.WIDTH, 1.0 - entity.position.y / const.HEIGHT])
 
     panel_input_msg_box_rect.width = WINDOW.get_width() / 2
     panel_input_msg_box_rect.x = (WINDOW.get_width() / 2 - ouija_pos[0]) - 90
