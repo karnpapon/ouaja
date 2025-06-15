@@ -11,7 +11,7 @@ from pygame.locals import *
 import queue
 import pygame
 import pygame_textinput
-from pygame_render import RenderEngine
+# from pygame_render import RenderEngine
 import sys
 import os
 import random
@@ -418,6 +418,10 @@ def start():
         answer_index += 1
         # print(current_answer)
         fx_swirl.play()
+
+        # TODO: send OSC shot 
+        arg.client.send_message("/synth_shot", [])
+
         if answer_index < len(answer):
           char = answer[answer_index].upper()
           timeout = const.FPS * const.TIMEOUT_FACTOR
