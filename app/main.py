@@ -101,7 +101,7 @@ fx_swirl.scale((swirl_fx_1.get_width() * 1, swirl_fx_1.get_height() * 1))
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load("assets/imgs/network-pixelated2.png")
+bg = pygame.image.load("assets/imgs/network-stroke.png")
 # tex = engine.surface_to_texture(bg)
 # bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
 logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
