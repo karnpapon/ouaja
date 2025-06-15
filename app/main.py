@@ -15,19 +15,16 @@ import pygame_textinput
 import sys
 import os
 import random
+import numpy as np
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
+bg_color = (0, 0, 0)  # B0AEA7
+text_color = (255, 0, 0)  # 312F28
+text_lightest_color = (255, 255, 255)  # 7D7866
 
 pygame.init()
 WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
-
-# Create TextInput-object
-font_input = pygame.font.Font("assets/fonts/ArgentPixelCF-Italic.otf", 42)
-textinput = pygame_textinput.TextInputVisualizer(font_object=font_input)
-textinput.font_color = (255, 0, 0)
-textinput.cursor_width = 2
-# textinput.cursor_blink_interval = 1000
 
 # engine = RenderEngine(const.WIDTH, const.HEIGHT)
 # shader_glow = engine.load_shader_from_path('assets/shaders/vertex.glsl', 'assets/shaders/default.glsl')
@@ -79,29 +76,87 @@ spriteAnim.scale((frame_1.get_width() * 5, frame_1.get_height() * 5))
 spriteAnim.play()
 
 
-fx_swirl = pyganim.PygAnimation([(swirl_fx_1, 0.1),
-                                 (swirl_fx_2, 0.1),
-                                 (swirl_fx_3, 0.1),
-                                 (swirl_fx_4, 0.1),
-                                 (swirl_fx_5, 0.1),
-                                 (swirl_fx_6, 0.1),
-                                 (swirl_fx_7, 0.1),
-                                 (swirl_fx_8, 0.1),
-                                 (swirl_fx_9, 0.1),
-                                 (swirl_fx_10, 0.1),
-                                 (swirl_fx_11, 0.1),
-                                 (swirl_fx_12, 0.1),
-                                 (swirl_fx_13, 0.1),
-                                 (swirl_fx_14, 0.1),
-                                 (swirl_fx_15, 0.1),
-                                 (swirl_fx_16, 0.1),
-                                 (swirl_fx_17, 0.1),
+def replace_color(surface, old_color, new_color, tolerance=0):
+    """
+    Replace all pixels of a given color in a Pygame surface with a new color.
+    
+    Args:
+        surface (pygame.Surface): The surface to process (must have per-pixel alpha).
+        old_color (tuple): The RGB color to replace, e.g., (255, 0, 0).
+        new_color (tuple): The RGB color to use as replacement, e.g., (255, 255, 255).
+        tolerance (int): Optional tolerance for matching the old_color. Default is 0 (exact match).
+    
+    Returns:
+        pygame.Surface: A new surface with the color replaced.
+    """
+    # Ensure the surface has per-pixel alpha
+    surface = surface.convert_alpha()
+    
+    # Copy to avoid modifying the original surface
+    new_surface = surface.copy()
+
+    # Get pixel arrays
+    rgb_array = pygame.surfarray.pixels3d(new_surface)
+    alpha_array = pygame.surfarray.pixels_alpha(new_surface)
+
+    # Build match mask
+    r_match = np.abs(rgb_array[:, :, 0] - old_color[0]) <= tolerance
+    g_match = np.abs(rgb_array[:, :, 1] - old_color[1]) <= tolerance
+    b_match = np.abs(rgb_array[:, :, 2] - old_color[2]) <= tolerance
+    match_mask = r_match & g_match & b_match
+
+    # Replace color
+    rgb_array[match_mask] = new_color
+
+    # Unlock pixel arrays
+    del rgb_array
+    del alpha_array
+
+    return new_surface
+
+
+replace_color_swirl_fx_1 = replace_color(swirl_fx_1, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_2 = replace_color(swirl_fx_2, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_3 = replace_color(swirl_fx_3, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_4 = replace_color(swirl_fx_4, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_5 = replace_color(swirl_fx_5, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_6 = replace_color(swirl_fx_6, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_7 = replace_color(swirl_fx_7, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_8 = replace_color(swirl_fx_8, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_9 = replace_color(swirl_fx_9, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_10 = replace_color(swirl_fx_10, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_11 = replace_color(swirl_fx_11, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_12 = replace_color(swirl_fx_12, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_13 = replace_color(swirl_fx_13, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_14 = replace_color(swirl_fx_14, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_15 = replace_color(swirl_fx_15, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_16 = replace_color(swirl_fx_16, text_color, text_lightest_color, tolerance=0)
+replace_color_swirl_fx_17 = replace_color(swirl_fx_17, text_color, text_lightest_color, tolerance=0)
+
+fx_swirl = pyganim.PygAnimation([(replace_color_swirl_fx_1, 0.1),
+                                 (replace_color_swirl_fx_2, 0.1),
+                                 (replace_color_swirl_fx_3, 0.1),
+                                 (replace_color_swirl_fx_4, 0.1),
+                                 (replace_color_swirl_fx_5, 0.1),
+                                 (replace_color_swirl_fx_6, 0.1),
+                                 (replace_color_swirl_fx_7, 0.1),
+                                 (replace_color_swirl_fx_8, 0.1),
+                                 (replace_color_swirl_fx_9, 0.1),
+                                 (replace_color_swirl_fx_10, 0.1),
+                                 (replace_color_swirl_fx_11, 0.1),
+                                 (replace_color_swirl_fx_12, 0.1),
+                                 (replace_color_swirl_fx_13, 0.1),
+                                 (replace_color_swirl_fx_14, 0.1),
+                                 (replace_color_swirl_fx_15, 0.1),
+                                 (replace_color_swirl_fx_16, 0.1),
+                                 (replace_color_swirl_fx_17, 0.1),
                                  ], loop=False)
 fx_swirl.scale((swirl_fx_1.get_width() * 1, swirl_fx_1.get_height() * 1))
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 pygame.display.set_caption("live-ghosting")
-bg = pygame.image.load("assets/imgs/network-stroke.png")
+bg = pygame.image.load("assets/imgs/network-red-filled-layer-1-pixelated.png")
+bg2 = pygame.image.load("assets/imgs/network-red-filled-layer-2-alt.png")
 # tex = engine.surface_to_texture(bg)
 # bg = pygame.transform.scale(bg, (const.WIDTH, const.HEIGHT))
 logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
@@ -121,9 +176,14 @@ small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
 # text_color = (49, 47, 40) #312F28
 # text_lightest_color = (125,120,102) #7D7866
 
-bg_color = (0, 0, 0)  # B0AEA7
-text_color = (255, 0, 0)  # 312F28
-text_lightest_color = (255, 255, 255)  # 7D7866
+
+# Create TextInput-object
+font_input = pygame.font.Font("assets/fonts/ArgentPixelCF-Italic.otf", 42)
+textinput = pygame_textinput.TextInputVisualizer(font_object=font_input)
+textinput.font_color = text_color
+textinput.cursor_width = 2
+textinput.cursor_color = text_color
+# textinput.cursor_blink_interval = 1000
 
 font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
 
@@ -305,10 +365,10 @@ def start():
   )
 
   for key in nine:
-    nine[key] = tint_surface(nine[key], (255, 0, 0))
+    nine[key] = tint_surface(nine[key], text_color)
 
   for key in nine_2:
-    nine_2[key] = tint_surface(nine_2[key], (255, 0, 0))
+    nine_2[key] = tint_surface(nine_2[key], text_color)
 
   while not states.quit_app:
     try:
@@ -432,6 +492,7 @@ def start():
           go_to_init_pos = True
 
     ouija_pos = get_center_position(WINDOW, (const.WIDTH, const.HEIGHT))
+    WINDOW.blit(bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
     WINDOW.blit(bg, (0+ouija_pos[0], 0+ouija_pos[1]))
     if go_to_init_pos and to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
       answer_index = 0
@@ -457,7 +518,8 @@ def start():
         display_letter = "(  )"
       else:
         display_letter = letter.lower() if letter.isalpha() else letter
-      text = small_font.render(f"{display_letter}", True, text_color)
+      color = bg_color if display_letter.isalpha() else text_color
+      text = small_font.render(f"{display_letter}", True, color)
       pos = [const.CHARACTERS[letter][0] + ouija_pos[0],
              const.CHARACTERS[letter][1] + ouija_pos[1]]
       WINDOW.blit(text, pos)
@@ -494,8 +556,8 @@ def start():
                 25, panel_input_msg_box_rect.y + 14))
 
     draw_nine_slice_scaled(nine, WINDOW, panel_rect, tile_size, 2)
-    draw_nine_slice_scaled(
-        nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
+    # draw_nine_slice_scaled(
+    #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
     # Clear the screen
     # engine.clear(64, 128, 64)

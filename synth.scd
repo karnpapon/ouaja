@@ -4,7 +4,8 @@ Window.closeAll;
 MIDIClient.init;
 // s.options.outDevice = "Scarlett 2i4 USB";
 // s.options.outDevice = "Audient iD14";
-s.options.outDevice ="MacBook Pro Speakers";
+// s.options.outDevice ="MacBook Pro Speakers";
+s.options.outDevice ="External Headphones";
 s.options.numInputBusChannels = 0;
 
 s.waitForBoot{
@@ -317,7 +318,7 @@ s.waitForBoot{
 		}).add;
 
 		SynthDef("fm-gong", {
-			arg freq = 300, dr = 5.0, amp = 1.0;
+			arg freq = 300, dr = 5.0, amp = 1.0, pan = 0;
 			var mod1sig, mod1f = freq * 1.16;
 			var mod2sig, mod2f = freq * 3.14;
 			var mod3sig, mod3f = freq * 1.005;
@@ -369,7 +370,7 @@ s.waitForBoot{
 			// envelope the signal, afterwards
 			mod3sig = mod3sig * ((idx3a + idx3scaler) * mod3env);
 			carsig = SinOsc.ar(freq + lfo + mod1sig + mod2sig + mod3sig);
-			Out.ar(0, carsig * ampenv * amp);
+			Out.ar(0, Pan2.ar(carsig * ampenv * amp, pan));
 		}).send
 
 
@@ -393,10 +394,22 @@ s.waitForBoot{
 
 	OSCdef(\shot, {
 		arg msg;
-		// msg[0].postln;
+		var freqs = [12.4,26.9,55.5,64.5,84.2,93.4,124.6, 281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835];
+
+		var weights = freqs.collect { |val|
+			if (val < 564) { 5 } { 1 }
+		};
+
+		var totalWeight = weights.sum;
+		var normWeights = weights.collect { |w| w / totalWeight };
+
+		var chosen = freqs.wchoose(normWeights);
+
 		Synth("fm-gong", [
-			\freq, [281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835, 919.8, 1018, 1124, 1241].choose,
-			\dr, [5,4,3,2]
+			\freq, chosen,
+			\dr, [24,18,12,8,6,4].choose,
+			\pan, rrand(-1.0, 1.0),
+			\amp, 0.45
 		]);
 	}, '/synth_shot');
 };
