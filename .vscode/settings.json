@@ -2,7 +2,7 @@
   "[python]": {
     // "editor.defaultFormatter": "ms-python.autopep8",
     "editor.formatOnSave": false
-},
+  },
     // "python.formatting.autopep8Args": ["--ignore", "E402"],
     // "python.formatting.provider": "none",
     "[supercollider]": {
@@ -10,4 +10,7 @@
     },
     "editor.tabSize": 2,
     "python.languageServer": "Pylance",
+    "python.analysis.diagnosticSeverityOverrides": {
+      "reportUndefinedVariable": "error"
+    }
 }

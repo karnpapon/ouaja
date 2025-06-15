@@ -2,7 +2,6 @@ import re
 from . import transitions
 from . import states
 from . import arg
-from .button import Button
 from . import const
 from . import utils
 from . import pyganim
@@ -15,7 +14,6 @@ import pygame_textinput
 import sys
 import os
 import random
-import numpy as np
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
@@ -37,121 +35,33 @@ def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
   )
 
 
-frame_1 = pygame.image.load("assets/sprites/soul/soul_1.png").convert_alpha()
-frame_2 = pygame.image.load("assets/sprites/soul/soul_2.png").convert_alpha()
-frame_3 = pygame.image.load("assets/sprites/soul/soul_3.png").convert_alpha()
-frame_4 = pygame.image.load("assets/sprites/soul/soul_4.png").convert_alpha()
-frame_5 = pygame.image.load("assets/sprites/soul/soul_5.png").convert_alpha()
-frame_6 = pygame.image.load("assets/sprites/soul/soul_6.png").convert_alpha()
-frame_7 = pygame.image.load("assets/sprites/soul/soul_7.png").convert_alpha()
-frame_8 = pygame.image.load("assets/sprites/soul/soul_8.png").convert_alpha()
+# Load soul animation frames dynamically
+soul_frame_paths = [
+  f"assets/sprites/soul/soul_{i}.png" for i in range(1, 9)
+]
+soul_frames = [pygame.image.load(path).convert_alpha() for path in soul_frame_paths]
 
-swirl_fx_1 = pygame.image.load("assets/sprites/swirl/frame_00.png")
-swirl_fx_2 = pygame.image.load("assets/sprites/swirl/frame_01.png")
-swirl_fx_3 = pygame.image.load("assets/sprites/swirl/frame_02.png")
-swirl_fx_4 = pygame.image.load("assets/sprites/swirl/frame_03.png")
-swirl_fx_5 = pygame.image.load("assets/sprites/swirl/frame_04.png")
-swirl_fx_6 = pygame.image.load("assets/sprites/swirl/frame_05.png")
-swirl_fx_7 = pygame.image.load("assets/sprites/swirl/frame_06.png")
-swirl_fx_8 = pygame.image.load("assets/sprites/swirl/frame_07.png")
-swirl_fx_9 = pygame.image.load("assets/sprites/swirl/frame_08.png")
-swirl_fx_10 = pygame.image.load("assets/sprites/swirl/frame_09.png")
-swirl_fx_11 = pygame.image.load("assets/sprites/swirl/frame_10.png")
-swirl_fx_12 = pygame.image.load("assets/sprites/swirl/frame_11.png")
-swirl_fx_13 = pygame.image.load("assets/sprites/swirl/frame_12.png")
-swirl_fx_14 = pygame.image.load("assets/sprites/swirl/frame_13.png")
-swirl_fx_15 = pygame.image.load("assets/sprites/swirl/frame_14.png")
-swirl_fx_16 = pygame.image.load("assets/sprites/swirl/frame_15.png")
-swirl_fx_17 = pygame.image.load("assets/sprites/swirl/frame_16.png")
-
-spriteAnim = pyganim.PygAnimation([(frame_1, 0.1),
-                                   (frame_2, 0.1),
-                                   (frame_3, 0.1),
-                                   (frame_4, 0.1),
-                                   (frame_5, 0.1),
-                                   (frame_6, 0.1),
-                                   (frame_7, 0.1),
-                                   (frame_8, 0.1)])
-spriteAnim.scale((frame_1.get_width() * 5, frame_1.get_height() * 5))
+spriteAnim = pyganim.PygAnimation([(frame, 0.1) for frame in soul_frames])
+spriteAnim.scale((soul_frames[0].get_width() * 5, soul_frames[0].get_height() * 5))
 spriteAnim.play()
 
 
-def replace_color(surface, old_color, new_color, tolerance=0):
-    """
-    Replace all pixels of a given color in a Pygame surface with a new color.
-    
-    Args:
-        surface (pygame.Surface): The surface to process (must have per-pixel alpha).
-        old_color (tuple): The RGB color to replace, e.g., (255, 0, 0).
-        new_color (tuple): The RGB color to use as replacement, e.g., (255, 255, 255).
-        tolerance (int): Optional tolerance for matching the old_color. Default is 0 (exact match).
-    
-    Returns:
-        pygame.Surface: A new surface with the color replaced.
-    """
-    # Ensure the surface has per-pixel alpha
-    surface = surface.convert_alpha()
-    
-    # Copy to avoid modifying the original surface
-    new_surface = surface.copy()
+# Load swirl effect frames dynamically and apply color replacement
+swirl_fx_frame_paths = [
+  f"assets/sprites/swirl/frame_{i:02d}.png" for i in range(17)
+]
+swirl_fx_frames = [pygame.image.load(path).convert_alpha() for path in swirl_fx_frame_paths]
 
-    # Get pixel arrays
-    rgb_array = pygame.surfarray.pixels3d(new_surface)
-    alpha_array = pygame.surfarray.pixels_alpha(new_surface)
+replace_color_swirl_fx_frames = [
+  utils.replace_color(frame, text_color, text_lightest_color, tolerance=0)
+  for frame in swirl_fx_frames
+]
 
-    # Build match mask
-    r_match = np.abs(rgb_array[:, :, 0] - old_color[0]) <= tolerance
-    g_match = np.abs(rgb_array[:, :, 1] - old_color[1]) <= tolerance
-    b_match = np.abs(rgb_array[:, :, 2] - old_color[2]) <= tolerance
-    match_mask = r_match & g_match & b_match
-
-    # Replace color
-    rgb_array[match_mask] = new_color
-
-    # Unlock pixel arrays
-    del rgb_array
-    del alpha_array
-
-    return new_surface
-
-
-replace_color_swirl_fx_1 = replace_color(swirl_fx_1, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_2 = replace_color(swirl_fx_2, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_3 = replace_color(swirl_fx_3, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_4 = replace_color(swirl_fx_4, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_5 = replace_color(swirl_fx_5, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_6 = replace_color(swirl_fx_6, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_7 = replace_color(swirl_fx_7, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_8 = replace_color(swirl_fx_8, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_9 = replace_color(swirl_fx_9, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_10 = replace_color(swirl_fx_10, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_11 = replace_color(swirl_fx_11, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_12 = replace_color(swirl_fx_12, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_13 = replace_color(swirl_fx_13, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_14 = replace_color(swirl_fx_14, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_15 = replace_color(swirl_fx_15, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_16 = replace_color(swirl_fx_16, text_color, text_lightest_color, tolerance=0)
-replace_color_swirl_fx_17 = replace_color(swirl_fx_17, text_color, text_lightest_color, tolerance=0)
-
-fx_swirl = pyganim.PygAnimation([(replace_color_swirl_fx_1, 0.1),
-                                 (replace_color_swirl_fx_2, 0.1),
-                                 (replace_color_swirl_fx_3, 0.1),
-                                 (replace_color_swirl_fx_4, 0.1),
-                                 (replace_color_swirl_fx_5, 0.1),
-                                 (replace_color_swirl_fx_6, 0.1),
-                                 (replace_color_swirl_fx_7, 0.1),
-                                 (replace_color_swirl_fx_8, 0.1),
-                                 (replace_color_swirl_fx_9, 0.1),
-                                 (replace_color_swirl_fx_10, 0.1),
-                                 (replace_color_swirl_fx_11, 0.1),
-                                 (replace_color_swirl_fx_12, 0.1),
-                                 (replace_color_swirl_fx_13, 0.1),
-                                 (replace_color_swirl_fx_14, 0.1),
-                                 (replace_color_swirl_fx_15, 0.1),
-                                 (replace_color_swirl_fx_16, 0.1),
-                                 (replace_color_swirl_fx_17, 0.1),
-                                 ], loop=False)
-fx_swirl.scale((swirl_fx_1.get_width() * 1, swirl_fx_1.get_height() * 1))
+fx_swirl = pyganim.PygAnimation(
+  [(frame, 0.1) for frame in replace_color_swirl_fx_frames],
+  loop=False
+)
+fx_swirl.scale((swirl_fx_frames[0].get_width(), swirl_fx_frames[0].get_height()))
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 pygame.display.set_caption("live-ghosting")
@@ -176,7 +86,6 @@ small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
 # text_color = (49, 47, 40) #312F28
 # text_lightest_color = (125,120,102) #7D7866
 
-
 # Create TextInput-object
 font_input = pygame.font.Font("assets/fonts/ArgentPixelCF-Italic.otf", 42)
 textinput = pygame_textinput.TextInputVisualizer(font_object=font_input)
@@ -196,58 +105,6 @@ start_x = 50
 start_y = 200
 spacing = 28
 row_spacing = 60
-
-def slice_nine(image: pygame.Surface, tile_size):
-  return {
-      "tl": image.subsurface((0, 0, tile_size, tile_size)),
-      "t": image.subsurface((tile_size, 0, tile_size, tile_size)),
-      "tr": image.subsurface((tile_size * 2, 0, tile_size, tile_size)),
-      "l": image.subsurface((0, tile_size, tile_size, tile_size)),
-      "c": image.subsurface((tile_size, tile_size, tile_size, tile_size)),
-      "r": image.subsurface((tile_size * 2, tile_size, tile_size, tile_size)),
-      "bl": image.subsurface((0, tile_size * 2, tile_size, tile_size)),
-      "b": image.subsurface((tile_size, tile_size * 2, tile_size, tile_size)),
-      "br": image.subsurface((tile_size * 2, tile_size * 2, tile_size, tile_size)),
-  }
-
-
-def draw_nine_slice_scaled(slices, surface: pygame.Surface, rect, tile_size, scale):
-  x, y, w, h = rect
-  s = tile_size * scale
-
-  # Corners
-  surface.blit(pygame.transform.scale(slices["tl"], (s, s)), (x, y))
-  surface.blit(pygame.transform.scale(slices["tr"], (s, s)), (x + w - s, y))
-  surface.blit(pygame.transform.scale(slices["bl"], (s, s)), (x, y + h - s))
-  surface.blit(pygame.transform.scale(
-      slices["br"], (s, s)), (x + w - s, y + h - s))
-
-  # Top/Bottom
-  for i in range(x + s, x + w - s, s):
-    surface.blit(pygame.transform.scale(slices["t"], (s, s)), (i, y))
-    surface.blit(pygame.transform.scale(slices["b"], (s, s)), (i, y + h - s))
-
-  # Left/Right
-  for j in range(y + s, y + h - s, s):
-    surface.blit(pygame.transform.scale(slices["l"], (s, s)), (x, j))
-    surface.blit(pygame.transform.scale(slices["r"], (s, s)), (x + w - s, j))
-
-  # Center
-  for i in range(x + s, x + w - s, s):
-    for j in range(y + s, y + h - s, s):
-      surface.blit(pygame.transform.scale(slices["c"], (s, s)), (i, j))
-
-
-def draw_border(screen: pygame.Surface, tile, screen_width, screen_height, tile_size):
-  # Top and Bottom
-  for x in range(0, screen_width, tile_size):
-    screen.blit(tile, (x, 0))  # Top
-    screen.blit(tile, (x, screen_height - tile_size))  # Bottom
-
-  # Left and Right
-  for y in range(0, screen_height, tile_size):
-    screen.blit(tile, (0, y))  # Left
-    screen.blit(tile, (screen_width - tile_size, y))  # Right
 
 class Pointer(object):
   def __init__(self, x, y, color):
@@ -280,62 +137,7 @@ class Pointer(object):
     self.position.y += self.velocity.y
 
 
-def get_font(size):
-  return pygame.font.Font("assets/fonts/NicerNightie.ttf", size)
-
-# draw some text into an area of a surface
-# automatically wraps words
-# returns any text that didn't get blitted
-# https://www.pygame.org/wiki/TextWrap
-
-
-def draw_text(surface, text, color, rect, font, aa=False, bkg=None):
-  rect = pygame.Rect(rect)
-  y = rect.top
-  lineSpacing = -2
-
-  # get the height of the font
-  fontHeight = font.size("Tg")[1]
-
-  while text:
-    i = 1
-
-    # determine if the row of text will be outside our area
-    if y + fontHeight > rect.bottom:
-      break
-
-    # determine maximum width of line
-    while font.size(text[:i])[0] < rect.width and i < len(text):
-      i += 1
-
-    # if we've wrapped the text, then adjust the wrap to the last word
-    if i < len(text):
-      i = text.rfind(" ", 0, i) + 1
-
-    # render the line and blit it to the surface
-    if bkg:
-      image = font.render(text[:i], 1, color, bkg)
-      image.set_colorkey(bkg)
-    else:
-      image = font.render(text[:i], aa, color)
-
-    surface.blit(image, (rect.left, y))
-    y += fontHeight + lineSpacing
-
-    # remove the text we just blitted
-    text = text[i:]
-
-  return text
-
-
 pointer = Pointer(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
-
-
-def tint_surface(surface: pygame.Surface, tint_color):
-  """Apply a color tint to a white image with transparency."""
-  tinted = surface.copy()
-  tinted.fill(tint_color, special_flags=pygame.BLEND_RGBA_MULT)
-  return tinted
 
 def start():
   answer_index = 0
@@ -349,12 +151,12 @@ def start():
   border_image = pygame.image.load(
       "assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
   tile_size = 32
-  nine = slice_nine(border_image, tile_size)
+  nine = utils.slice_nine(border_image, tile_size)
   panel_rect = pygame.Rect(0, 0, WINDOW.get_width(), WINDOW.get_height())
 
   border_image_2 = pygame.image.load(
       "assets/ui/hexany/Panels/Transparent/simple.png").convert_alpha()
-  nine_2 = slice_nine(border_image_2, tile_size)
+  nine_2 = utils.slice_nine(border_image_2, tile_size)
   msg_box_w = WINDOW.get_width() // 2
   msg_box_h = WINDOW.get_height() // 6
   panel_input_msg_box_rect = pygame.Rect(
@@ -365,10 +167,10 @@ def start():
   )
 
   for key in nine:
-    nine[key] = tint_surface(nine[key], text_color)
+    nine[key] = utils.tint_surface(nine[key], text_color)
 
   for key in nine_2:
-    nine_2[key] = tint_surface(nine_2[key], text_color)
+    nine_2[key] = utils.tint_surface(nine_2[key], text_color)
 
   while not states.quit_app:
     try:
@@ -521,11 +323,9 @@ def start():
              const.CHARACTERS[letter][1] + ouija_pos[1]]
       WINDOW.blit(text, pos)
 
-    draw_text(
+    utils.draw_text(
         WINDOW,
-        # current_answer.title(),  # Capitalize each word
-        current_answer,  # Capitalize each word
-        # "".join(random.choice([c.upper(), c.lower()]) for c in current_answer),
+        current_answer, 
         const.RED,
         [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
         pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
@@ -536,9 +336,9 @@ def start():
       if answer_index > 0:
         fx_swirl.blit(WINDOW, (
             ((const.CHARACTERS[answer[answer_index - 1]][0] -
-             swirl_fx_1.get_width() / 2) + 10) + ouija_pos[0],
+             swirl_fx_frames[0].get_width() / 2) + 10) + ouija_pos[0],
             ((const.CHARACTERS[answer[answer_index - 1]][1] -
-             swirl_fx_1.get_height() / 2) + 10) + ouija_pos[1]
+             swirl_fx_frames[0].get_height() / 2) + 10) + ouija_pos[1]
         ))
 
     pointer.Draw(ouija_pos)
@@ -552,7 +352,7 @@ def start():
     WINDOW.blit(textinput.surface, (panel_input_msg_box_rect.x +
                 25, panel_input_msg_box_rect.y + 14))
 
-    draw_nine_slice_scaled(nine, WINDOW, panel_rect, tile_size, 2)
+    utils.draw_nine_slice_scaled(nine, WINDOW, panel_rect, tile_size, 2)
     # draw_nine_slice_scaled(
     #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
