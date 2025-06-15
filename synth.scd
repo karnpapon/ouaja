@@ -394,7 +394,7 @@ s.waitForBoot{
 
 	OSCdef(\shot, {
 		arg msg;
-		var freqs = [12.4,26.9,55.5,64.5,84.2,93.4,124.6, 281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835];
+		var freqs = [50,55.5,64.5,84.2,93.4,124.6, 281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835];
 
 		var weights = freqs.collect { |val|
 			if (val < 564) { 5 } { 1 }
@@ -404,7 +404,7 @@ s.waitForBoot{
 		var normWeights = weights.collect { |w| w / totalWeight };
 
 		var chosen = freqs.wchoose(normWeights);
-
+		// chosen.postln;
 		Synth("fm-gong", [
 			\freq, chosen,
 			\dr, [24,18,12,8,6,4].choose,
