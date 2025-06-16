@@ -179,7 +179,26 @@ def create_radial_glow(size, color=(255, 255, 255), max_alpha=100):
 
     return surface
 
-glow_base = create_radial_glow(160, (255, 0, 0), max_alpha=255)
+def create_pixelated_glow(size, color=(255, 255, 255), steps=4, max_alpha=120):
+    surface = pygame.Surface((size, size), pygame.SRCALPHA)
+    center = size // 2
+    max_radius = center
+
+    step_size = max_radius // steps
+
+    for i in range(steps):
+        alpha = int(max_alpha * ((steps - i) / steps))
+        radius = max_radius - i * step_size
+        rect = pygame.Rect(center - radius, center - radius, radius * 2, radius * 2)
+        pygame.draw.ellipse(surface, (*color, alpha), rect)
+    
+    return surface
+
+def blend_color(start_color, end_color, t):
+    return tuple(int(start + (end - start) * t) for start, end in zip(start_color, end_color))
+
+# glow_base = create_radial_glow(160, (255, 0, 0), max_alpha=255)
+glow_base = create_pixelated_glow(160, (255, 0, 0), steps=6, max_alpha=255)
 
 def start():
   answer_index = 0
@@ -310,7 +329,7 @@ def start():
     camera.update()
 
     buffer = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-    buffer.fill((bg_color)) 
+    
     # screen.fill(bg_color)
     
     # if transitions.updateScreen() == False:
@@ -329,7 +348,7 @@ def start():
         fx_swirl.play()
         arg.client.send_message("/synth_shot", [])
         glow_frame_counter = GLOW_DURATION_FRAMES
-        camera.start_shake()
+        # camera.start_shake()
 
         if answer_index < len(answer):
           char = answer[answer_index].upper()
@@ -340,17 +359,25 @@ def start():
         else:
           go_to_init_pos = True
 
+    if glow_frame_counter > 0:
+      glow_frame_counter -= 1
+      blend_t = glow_frame_counter / GLOW_DURATION_FRAMES  
+      bg_color = blend_color((150, 0, 0), (0, 0, 0), 1 - blend_t) 
+    else:
+      bg_color = (0, 0, 0)  
+
+    buffer.fill(bg_color) 
+
     ouija_pos = get_center_position(buffer, (const.WIDTH, const.HEIGHT))
     buffer.blit(bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
     buffer.blit(bg, (0+ouija_pos[0], 0+ouija_pos[1]))
 
-    if glow_frame_counter > 0:
-      glow_frame_counter -= 1
 
     if glow_frame_counter > 0:
       glow_alpha = get_glow_alpha(glow_frame_counter)
       glow_surface = glow_base.copy()
       glow_surface.set_alpha(glow_alpha)
+      # screen.set_alpha(glow_alpha)
       buffer.blit(glow_surface, (
         (entity.position.x-(60-ouija_pos[0])), 
         (entity.position.y-(60-ouija_pos[1]))
