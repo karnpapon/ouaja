@@ -162,11 +162,24 @@ GLOW_MAX_ALPHA = 200
 GLOW_DURATION = 1  # seconds to fade out
 
 # Glow base surface
-glow_base = pygame.Surface((160, 160), pygame.SRCALPHA)
-pygame.draw.circle(glow_base, (255, 0, 0), (80, 80), 80)
+
+# pygame.draw.circle(glow_base, (255, 0, 0), (80, 80), 80)
 
 def get_glow_alpha(frame_left):
   return int(GLOW_MAX_ALPHA * (frame_left / GLOW_DURATION_FRAMES))
+
+
+def create_radial_glow(size, color=(255, 255, 255), max_alpha=100):
+    surface = pygame.Surface((size, size), pygame.SRCALPHA)
+    center = size // 2
+
+    for radius in range(center, 0, -1):
+        alpha = int(max_alpha * (radius / center)**2)
+        pygame.draw.circle(surface, (*color, alpha), (center, center), radius)
+
+    return surface
+
+glow_base = create_radial_glow(160, (255, 0, 0), max_alpha=255)
 
 def start():
   answer_index = 0
