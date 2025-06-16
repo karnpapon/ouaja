@@ -22,7 +22,7 @@ text_color = (255, 0, 0)  # 312F28
 text_lightest_color = (255, 255, 255)  # 7D7866
 
 pygame.init()
-WINDOW = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+screen = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
 
 # engine = RenderEngine(const.WIDTH, const.HEIGHT)
 # shader_glow = engine.load_shader_from_path('assets/shaders/vertex.glsl', 'assets/shaders/default.glsl')
@@ -72,10 +72,8 @@ bg2 = pygame.image.load("assets/imgs/network-red-filled-layer-2-alt.png")
 logo = pygame.image.load(os.path.join("img", "logo.png")).convert()
 logo = pygame.transform.scale(
     logo, (logo.get_width() / 1.5, logo.get_height() / 1.5))
-coin = pygame.image.load(os.path.join(
-    "img", "coin-sm-shadow2.png")).convert_alpha()
 
-transitions.init(WINDOW, const.WIDTH, const.HEIGHT)
+transitions.init(screen, const.WIDTH, const.HEIGHT)
 clock = pygame.time.Clock()
 
 padding = 20
@@ -114,10 +112,10 @@ class Entity(object):
     self.acceleration = pygame.Vector2(0.5, 0.5)
     self.friction = 0.95
 
-  def Draw(self, ouija_pos):
-    spriteAnim.blit(WINDOW, (
-        ((self.position.x - coin.get_width() / 2) + 10) + ouija_pos[0],
-        ((self.position.y - coin.get_height() / 2) + ouija_pos[1])
+  def Draw(self, buffer, ouija_pos):
+    spriteAnim.blit(buffer, (
+        ((self.position.x - soul_frames[0].get_width() / 2)  ) + ouija_pos[0],
+        ((self.position.y - soul_frames[0].get_height() / 2) - 25 + ouija_pos[1])
     ))
 
   def Move(self, to: pygame.Vector2):
@@ -132,12 +130,43 @@ class Entity(object):
                           min(const.MAX_SPEED, self.velocity.x))
     self.velocity.y = max(-const.MAX_SPEED,
                           min(const.MAX_SPEED, self.velocity.y))
-
     self.position.x += self.velocity.x
     self.position.y += self.velocity.y
 
+class Camera:
+    def __init__(self):
+      self.offset = pygame.Vector2(0, 0)
+      self.duration = 0
+      self.intensity = 0
+
+    def start_shake(self, duration=6, intensity=3):
+      self.duration = duration
+      self.intensity = intensity
+
+    def update(self):
+      if self.duration > 0:
+        self.offset.x = random.randint(-self.intensity, self.intensity)
+        self.offset.y = random.randint(-self.intensity, self.intensity)
+        self.duration -= 1
+      else:
+        self.offset = pygame.Vector2(0, 0)
+
+# บว7921
 
 entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
+camera = Camera()
+
+# Glow data
+GLOW_DURATION_FRAMES = 60
+GLOW_MAX_ALPHA = 200
+GLOW_DURATION = 1  # seconds to fade out
+
+# Glow base surface
+glow_base = pygame.Surface((160, 160), pygame.SRCALPHA)
+pygame.draw.circle(glow_base, (255, 0, 0), (80, 80), 80)
+
+def get_glow_alpha(frame_left):
+  return int(GLOW_MAX_ALPHA * (frame_left / GLOW_DURATION_FRAMES))
 
 def start():
   answer_index = 0
@@ -147,21 +176,22 @@ def start():
   current_answer = ""
   ouija_pos = None
   total_time = 0
+  glow_frame_counter = 0
 
   border_image = pygame.image.load(
       "assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
   tile_size = 32
   nine = utils.slice_nine(border_image, tile_size)
-  panel_rect = pygame.Rect(0, 0, WINDOW.get_width(), WINDOW.get_height())
+  panel_rect = pygame.Rect(0, 0, screen.get_width(), screen.get_height())
 
   border_image_2 = pygame.image.load(
       "assets/ui/hexany/Panels/Transparent/simple.png").convert_alpha()
   nine_2 = utils.slice_nine(border_image_2, tile_size)
-  msg_box_w = WINDOW.get_width() // 2
-  msg_box_h = WINDOW.get_height() // 6
+  msg_box_w = screen.get_width() // 2
+  msg_box_h = screen.get_height() // 6
   panel_input_msg_box_rect = pygame.Rect(
-      WINDOW.get_width() / 2 - (msg_box_w / 2),
-      WINDOW.get_height() - (msg_box_h / 2),
+      screen.get_width() / 2 - (msg_box_w / 2),
+      screen.get_height() - (msg_box_h / 2),
       msg_box_w,
       msg_box_h
   )
@@ -171,6 +201,8 @@ def start():
 
   for key in nine_2:
     nine_2[key] = utils.tint_surface(nine_2[key], text_color)
+
+  pygame.key.set_repeat(400, 25)
 
   while not states.quit_app:
     try:
@@ -199,7 +231,7 @@ def start():
           else:
             pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
           panel_rect = pygame.Rect(
-              0, 0, WINDOW.get_width(), WINDOW.get_height())
+              0, 0, screen.get_width(), screen.get_height())
         elif event.key == pygame.K_RETURN:
           if textinput.value != "":
             # match commands with prefix (::).
@@ -262,8 +294,11 @@ def start():
               #     outFile.close()
               # except IOError as e:
               #     print("I/O error({0.filename}):".format(e))
+    camera.update()
 
-    WINDOW.fill(bg_color)
+    buffer = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    buffer.fill((bg_color)) 
+    # screen.fill(bg_color)
     
     # if transitions.updateScreen() == False:
     if answer_index <= len(answer) and answer:
@@ -280,6 +315,8 @@ def start():
         answer_index += 1
         fx_swirl.play()
         arg.client.send_message("/synth_shot", [])
+        glow_frame_counter = GLOW_DURATION_FRAMES
+        camera.start_shake()
 
         if answer_index < len(answer):
           char = answer[answer_index].upper()
@@ -290,9 +327,22 @@ def start():
         else:
           go_to_init_pos = True
 
-    ouija_pos = get_center_position(WINDOW, (const.WIDTH, const.HEIGHT))
-    WINDOW.blit(bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
-    WINDOW.blit(bg, (0+ouija_pos[0], 0+ouija_pos[1]))
+    ouija_pos = get_center_position(buffer, (const.WIDTH, const.HEIGHT))
+    buffer.blit(bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
+    buffer.blit(bg, (0+ouija_pos[0], 0+ouija_pos[1]))
+
+    if glow_frame_counter > 0:
+      glow_frame_counter -= 1
+
+    if glow_frame_counter > 0:
+      glow_alpha = get_glow_alpha(glow_frame_counter)
+      glow_surface = glow_base.copy()
+      glow_surface.set_alpha(glow_alpha)
+      buffer.blit(glow_surface, (
+        (entity.position.x-(60-ouija_pos[0])), 
+        (entity.position.y-(60-ouija_pos[1]))
+      )) 
+
     if go_to_init_pos and to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
       answer_index = 0
       to = pygame.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y)
@@ -305,12 +355,12 @@ def start():
     # Draw "YES" and "NO"
     yes_text = font.render("Yes", True, text_color)
     no_text = font.render("No", True, text_color)
-    WINDOW.blit(yes_text, (70+ouija_pos[0], 50+ouija_pos[1]))
-    WINDOW.blit(no_text, (240+ouija_pos[0], 50+ouija_pos[1]))
+    buffer.blit(yes_text, (70+ouija_pos[0], 50+ouija_pos[1]))
+    buffer.blit(no_text, (240+ouija_pos[0], 50+ouija_pos[1]))
 
     # Draw "GOODBYE"
     goodbye_text = font.render("Goodbye", True, text_color)
-    WINDOW.blit(goodbye_text, (700+ouija_pos[0], 50 + ouija_pos[1]))
+    buffer.blit(goodbye_text, (700+ouija_pos[0], 50 + ouija_pos[1]))
 
     for _, letter in enumerate(letters):
       if letter == " ":
@@ -321,10 +371,10 @@ def start():
       text = small_font.render(f"{display_letter}", True, color)
       pos = [const.CHARACTERS[letter][0] + ouija_pos[0],
              const.CHARACTERS[letter][1] + ouija_pos[1]]
-      WINDOW.blit(text, pos)
+      buffer.blit(text, pos)
 
     utils.draw_text(
-        WINDOW,
+        buffer,
         current_answer, 
         const.RED,
         [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
@@ -334,40 +384,41 @@ def start():
     if (answer):
       entity.Move(to)
       if answer_index > 0:
-        fx_swirl.blit(WINDOW, (
+        fx_swirl.blit(buffer, (
             ((const.CHARACTERS[answer[answer_index - 1]][0] -
              swirl_fx_frames[0].get_width() / 2) + 10) + ouija_pos[0],
             ((const.CHARACTERS[answer[answer_index - 1]][1] -
              swirl_fx_frames[0].get_height() / 2) + 10) + ouija_pos[1]
         ))
 
-    entity.Draw(ouija_pos)
+    entity.Draw(buffer, ouija_pos)
     arg.client.send_message(
         "/synth_coord", [entity.position.x / const.WIDTH, 1.0 - entity.position.y / const.HEIGHT])
 
-    panel_input_msg_box_rect.width = WINDOW.get_width() / 2
-    panel_input_msg_box_rect.x = (WINDOW.get_width() / 2 - ouija_pos[0]) - 90
-    panel_input_msg_box_rect.y = WINDOW.get_height() - ouija_pos[1]
+    panel_input_msg_box_rect.width = screen.get_width() / 2
+    panel_input_msg_box_rect.x = (screen.get_width() / 2 - ouija_pos[0]) - 90
+    panel_input_msg_box_rect.y = screen.get_height() - ouija_pos[1]
 
-    WINDOW.blit(textinput.surface, (panel_input_msg_box_rect.x +
+    buffer.blit(textinput.surface, (panel_input_msg_box_rect.x +
                 25, panel_input_msg_box_rect.y + 14))
 
-    utils.draw_nine_slice_scaled(nine, WINDOW, panel_rect, tile_size, 2)
+    
     # draw_nine_slice_scaled(
     #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
-    # Clear the screen
-    # engine.clear(64, 128, 64)
-    # total_time += clock.get_time()
-    # shader_glow['time'] = total_time
-    # engine.render(tex, engine.screen, scale=16., shader=shader_glow)
+   
+    screen.fill((0, 0, 0)) 
+    screen.blit(buffer, camera.offset)
+    utils.draw_nine_slice_scaled(nine, screen, panel_rect, tile_size, 2)
 
+   
+   
     pygame.display.update()
     clock.tick(const.FPS)
 
 
 def main():
-  WINDOW.fill(bg_color)
+  screen.fill(bg_color)
   if transitions.updateScreen() == False:
     if states.should_start:
       start()
