@@ -404,12 +404,13 @@ s.waitForBoot{
 		var normWeights = weights.collect { |w| w / totalWeight };
 
 		var chosen = freqs.wchoose(normWeights);
-		// chosen.postln;
+		var dr = (msg[1] == 2).if { [6,8, 2, 2.5, 3,3.25, 4.25].choose } { [24,18,12,8,6,4].choose };
+
 		Synth("fm-gong", [
 			\freq, chosen,
-			\dr, [24,18,12,8,6,4].choose,
+			\dr, dr,
 			\pan, rrand(-1.0, 1.0),
-			\amp, 0.45
+			\amp, 0.3
 		]);
 	}, '/synth_shot');
 };

@@ -14,6 +14,7 @@ import pygame_textinput
 import sys
 import os
 import random
+import math
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
@@ -37,31 +38,35 @@ def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
 
 # Load soul animation frames dynamically
 soul_frame_paths = [
-  f"assets/sprites/soul/soul_{i}.png" for i in range(1, 9)
+    f"assets/sprites/soul/soul_{i}.png" for i in range(1, 9)
 ]
-soul_frames = [pygame.image.load(path).convert_alpha() for path in soul_frame_paths]
+soul_frames = [pygame.image.load(path).convert_alpha()
+               for path in soul_frame_paths]
 
 spriteAnim = pyganim.PygAnimation([(frame, 0.1) for frame in soul_frames])
-spriteAnim.scale((soul_frames[0].get_width() * 5, soul_frames[0].get_height() * 5))
+spriteAnim.scale((soul_frames[0].get_width() * 5,
+                 soul_frames[0].get_height() * 5))
 spriteAnim.play()
 
 
 # Load swirl effect frames dynamically and apply color replacement
 swirl_fx_frame_paths = [
-  f"assets/sprites/swirl/frame_{i:02d}.png" for i in range(17)
+    f"assets/sprites/swirl/frame_{i:02d}.png" for i in range(17)
 ]
-swirl_fx_frames = [pygame.image.load(path).convert_alpha() for path in swirl_fx_frame_paths]
+swirl_fx_frames = [pygame.image.load(
+    path).convert_alpha() for path in swirl_fx_frame_paths]
 
 replace_color_swirl_fx_frames = [
-  utils.replace_color(frame, text_color, text_lightest_color, tolerance=0)
-  for frame in swirl_fx_frames
+    utils.replace_color(frame, text_color, text_lightest_color, tolerance=0)
+    for frame in swirl_fx_frames
 ]
 
 fx_swirl = pyganim.PygAnimation(
-  [(frame, 0.1) for frame in replace_color_swirl_fx_frames],
-  loop=False
+    [(frame, 0.1) for frame in replace_color_swirl_fx_frames],
+    loop=False
 )
-fx_swirl.scale((swirl_fx_frames[0].get_width(), swirl_fx_frames[0].get_height()))
+fx_swirl.scale((swirl_fx_frames[0].get_width(),
+               swirl_fx_frames[0].get_height()))
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 pygame.display.set_caption("live-ghosting")
@@ -114,13 +119,17 @@ class Entity(object):
 
   def Draw(self, buffer, ouija_pos):
     spriteAnim.blit(buffer, (
-        ((self.position.x - soul_frames[0].get_width() / 2)  ) + ouija_pos[0],
-        ((self.position.y - soul_frames[0].get_height() / 2) - 25 + ouija_pos[1])
+        ((self.position.x - soul_frames[0].get_width() / 2)) + ouija_pos[0],
+        ((self.position.y -
+         soul_frames[0].get_height() / 2) - 25 + ouija_pos[1])
     ))
 
   def Move(self, to: pygame.Vector2):
     target = to
     dir = target - self.position
+
+    if (dir.x == 0 and dir.y == 0):
+      return
 
     self.velocity.x = self.velocity.x * self.friction + \
         self.acceleration.x * dir.normalize().x
@@ -133,25 +142,31 @@ class Entity(object):
     self.position.x += self.velocity.x
     self.position.y += self.velocity.y
 
+  def Teleport(self, to: pygame.Vector2):
+    self.position.x = to.x
+    self.position.y = to.y
+    return
+
 class Camera:
-    def __init__(self):
+  def __init__(self):
+    self.offset = pygame.Vector2(0, 0)
+    self.duration = 0
+    self.intensity = 0
+
+  def start_shake(self, duration=6, intensity=3):
+    self.duration = duration
+    self.intensity = intensity
+
+  def update(self):
+    if self.duration > 0:
+      self.offset.x = random.randint(-self.intensity, self.intensity)
+      self.offset.y = random.randint(-self.intensity, self.intensity)
+      self.duration -= 1
+    else:
       self.offset = pygame.Vector2(0, 0)
-      self.duration = 0
-      self.intensity = 0
-
-    def start_shake(self, duration=6, intensity=3):
-      self.duration = duration
-      self.intensity = intensity
-
-    def update(self):
-      if self.duration > 0:
-        self.offset.x = random.randint(-self.intensity, self.intensity)
-        self.offset.y = random.randint(-self.intensity, self.intensity)
-        self.duration -= 1
-      else:
-        self.offset = pygame.Vector2(0, 0)
 
 # บว7921
+
 
 entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
 camera = Camera()
@@ -170,35 +185,66 @@ def get_glow_alpha(frame_left):
 
 
 def create_radial_glow(size, color=(255, 255, 255), max_alpha=100):
-    surface = pygame.Surface((size, size), pygame.SRCALPHA)
-    center = size // 2
+  surface = pygame.Surface((size, size), pygame.SRCALPHA)
+  center = size // 2
 
-    for radius in range(center, 0, -1):
-        alpha = int(max_alpha * (radius / center)**2)
-        pygame.draw.circle(surface, (*color, alpha), (center, center), radius)
+  for radius in range(center, 0, -1):
+    alpha = int(max_alpha * (radius / center)**2)
+    pygame.draw.circle(surface, (*color, alpha), (center, center), radius)
 
-    return surface
+  return surface
 
 def create_pixelated_glow(size, color=(255, 255, 255), steps=4, max_alpha=120):
-    surface = pygame.Surface((size, size), pygame.SRCALPHA)
-    center = size // 2
-    max_radius = center
+  surface = pygame.Surface((size, size), pygame.SRCALPHA)
+  center = size // 2
+  max_radius = center
 
-    step_size = max_radius // steps
+  step_size = max_radius // steps
 
-    for i in range(steps):
-        alpha = int(max_alpha * ((steps - i) / steps))
-        radius = max_radius - i * step_size
-        rect = pygame.Rect(center - radius, center - radius, radius * 2, radius * 2)
-        pygame.draw.ellipse(surface, (*color, alpha), rect)
-    
-    return surface
+  for i in range(steps):
+    alpha = int(max_alpha * ((steps - i) / steps))
+    radius = max_radius - i * step_size
+    rect = pygame.Rect(center - radius, center -
+                       radius, radius * 2, radius * 2)
+    pygame.draw.ellipse(surface, (*color, alpha), rect)
+
+  return surface
 
 def blend_color(start_color, end_color, t):
-    return tuple(int(start + (end - start) * t) for start, end in zip(start_color, end_color))
+  return tuple(int(start + (end - start) * t) for start, end in zip(start_color, end_color))
+
+
+def create_radial_gradient_surface(size, inner_color=(0, 0, 0, 0), outer_color=(0, 0, 0, 255)):
+  width, height = size
+  surface = pygame.Surface((width, height), pygame.SRCALPHA)
+  center_x, center_y = width // 2, height // 2
+  max_radius = math.hypot(center_x, center_y)
+
+  for y in range(height):
+    for x in range(width):
+      dx = x - center_x
+      dy = y - center_y
+      distance = math.hypot(dx, dy)
+      t = min(distance / max_radius, 1.0)  # Normalize 0.0 - 1.0
+
+      # Interpolate between inner and outer color
+      r = int(inner_color[0] + (outer_color[0] - inner_color[0]) * t)
+      g = int(inner_color[1] + (outer_color[1] - inner_color[1]) * t)
+      b = int(inner_color[2] + (outer_color[2] - inner_color[2]) * t)
+      a = int(inner_color[3] + (outer_color[3] - inner_color[3]) * t)
+
+      surface.set_at((x, y), (r, g, b, a))
+
+  return surface
+
 
 # glow_base = create_radial_glow(160, (255, 0, 0), max_alpha=255)
-glow_base = create_pixelated_glow(160, (255, 0, 0), steps=6, max_alpha=255)
+# glow_base = create_pixelated_glow(160, (255, 0, 0), steps=6, max_alpha=255)
+glow_base = create_radial_gradient_surface(
+    size=(screen.get_width(), screen.get_height()),
+    inner_color=(0, 0, 0, 0),
+    outer_color=(255, 0, 0, 180)
+)
 
 def start():
   answer_index = 0
@@ -267,21 +313,22 @@ def start():
         elif event.key == pygame.K_RETURN:
           if textinput.value != "":
             # match commands with prefix (::).
-            if val := re.match("^((::).[A-z]+) *\d*", textinput.value):
+            if val := re.match(r"(;;\S+)(?:\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?))?$", textinput.value):
               cmd = val.group().split(' ')
-              if cmd[0] == "::SET_FPS":
+              if cmd[0] == ";;set_fps":
                 try:
                   const.FPS = utils.clamp(10, int(cmd[1]), 60)
                 except IndexError:
                   print(
                       "your SET_FPS index is not correct or maybe out of range.")
-              elif cmd[0] == "::SET_TIMEOUT_FACTOR":
+              elif cmd[0] == ";;set_timeout_factor":
+                const.TIMEOUT_FACTOR = float(cmd[1])
+              elif cmd[0] == ";;set_move_mode":
                 try:
-                  const.TIMEOUT_FACTOR = utils.clamp(1, int(cmd[1]), 8)
+                  const.MOVE_MODE = utils.clamp(1, int(cmd[1]), 2)
                 except IndexError:
-                  print(
-                      "your TIMEOUT_FACTOR index is not correct or maybe out of range.")
-              elif cmd[0] == "::SET_MAX_SPEED":
+                  print("SET_MOVE_MODE accept 1 or 2")
+              elif cmd[0] == ";;set_max_speed":
                 try:
                   const.MAX_SPEED = utils.clamp(1, int(cmd[1]), 200)
                 except IndexError:
@@ -294,10 +341,12 @@ def start():
               #     except IndexError:
               #         print(
               #             "your VELOCITY index is not correct or maybe out of range.")
-              elif cmd[0] == "::STOP":
+              elif cmd[0] == ";;stop":
                 states.abort = True
                 go_to_init_pos = True
-              elif cmd[0] == "::BYE":
+                const.TIMEOUT_FACTOR = 2
+              elif cmd[0] == ";;bye":
+                const.TIMEOUT_FACTOR = 2
                 answer = " "
                 states.reply_answer.empty()
                 states.abort = False
@@ -329,9 +378,7 @@ def start():
     camera.update()
 
     buffer = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-    
-    # screen.fill(bg_color)
-    
+
     # if transitions.updateScreen() == False:
     if answer_index <= len(answer) and answer:
       if entity.position.distance_to(to) < 15 + 15:
@@ -343,10 +390,11 @@ def start():
         current_answer = ""
         go_to_init_pos = False
       else:
-        current_answer += random.choice([answer[answer_index].upper(), answer[answer_index].lower()])
+        current_answer += random.choice(
+            [answer[answer_index].upper(), answer[answer_index].lower()])
         answer_index += 1
         fx_swirl.play()
-        arg.client.send_message("/synth_shot", [])
+        arg.client.send_message("/synth_shot", [const.MOVE_MODE])
         glow_frame_counter = GLOW_DURATION_FRAMES
         # camera.start_shake()
 
@@ -361,27 +409,33 @@ def start():
 
     if glow_frame_counter > 0:
       glow_frame_counter -= 1
-      blend_t = glow_frame_counter / GLOW_DURATION_FRAMES  
-      bg_color = blend_color((150, 0, 0), (0, 0, 0), 1 - blend_t) 
+      blend_t = glow_frame_counter / GLOW_DURATION_FRAMES
+      bg_color = blend_color((150, 0, 0), (0, 0, 0), 1 - blend_t)
     else:
-      bg_color = (0, 0, 0)  
+      bg_color = (0, 0, 0)
 
-    buffer.fill(bg_color) 
+    buffer.fill(bg_color)
 
     ouija_pos = get_center_position(buffer, (const.WIDTH, const.HEIGHT))
     buffer.blit(bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
     buffer.blit(bg, (0+ouija_pos[0], 0+ouija_pos[1]))
 
+    # if glow_frame_counter > 0:
+    #   glow_alpha = get_glow_alpha(glow_frame_counter)
+    #   glow_surface = glow_base.copy()
+    #   glow_surface = pygame.transform.smoothscale(glow_surface, screen.get_size())
+    #   glow_surface.set_alpha(glow_alpha)
+    #   buffer.blit(glow_surface, (0, 0))
 
-    if glow_frame_counter > 0:
-      glow_alpha = get_glow_alpha(glow_frame_counter)
-      glow_surface = glow_base.copy()
-      glow_surface.set_alpha(glow_alpha)
-      # screen.set_alpha(glow_alpha)
-      buffer.blit(glow_surface, (
-        (entity.position.x-(60-ouija_pos[0])), 
-        (entity.position.y-(60-ouija_pos[1]))
-      )) 
+    # if glow_frame_counter > 0:
+    #   glow_alpha = get_glow_alpha(glow_frame_counter)
+    #   glow_surface = glow_base.copy()
+    #   glow_surface.set_alpha(glow_alpha)
+    #   # screen.set_alpha(glow_alpha)
+    #   buffer.blit(glow_surface, (
+    #     (entity.position.x-(60-ouija_pos[0])),
+    #     (entity.position.y-(60-ouija_pos[1]))
+    #   ))
 
     if go_to_init_pos and to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
       answer_index = 0
@@ -415,21 +469,24 @@ def start():
 
     utils.draw_text(
         buffer,
-        current_answer, 
+        current_answer,
         const.RED,
         [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
         pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
     )
 
     if (answer):
-      entity.Move(to)
-      if answer_index > 0:
-        fx_swirl.blit(buffer, (
-            ((const.CHARACTERS[answer[answer_index - 1]][0] -
-             swirl_fx_frames[0].get_width() / 2) + 10) + ouija_pos[0],
-            ((const.CHARACTERS[answer[answer_index - 1]][1] -
-             swirl_fx_frames[0].get_height() / 2) + 10) + ouija_pos[1]
-        ))
+      if (const.MOVE_MODE == 1):
+        entity.Move(to)
+        if answer_index > 0:
+          fx_swirl.blit(buffer, (
+              ((const.CHARACTERS[answer[answer_index - 1]][0] -
+                swirl_fx_frames[0].get_width() / 2) + 10) + ouija_pos[0],
+              ((const.CHARACTERS[answer[answer_index - 1]][1] -
+                swirl_fx_frames[0].get_height() / 2) + 10) + ouija_pos[1]
+          ))
+      elif (const.MOVE_MODE == 2):
+        entity.Teleport(to)
 
     entity.Draw(buffer, ouija_pos)
     arg.client.send_message(
@@ -442,17 +499,13 @@ def start():
     buffer.blit(textinput.surface, (panel_input_msg_box_rect.x +
                 25, panel_input_msg_box_rect.y + 14))
 
-    
     # draw_nine_slice_scaled(
     #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
-   
-    screen.fill((0, 0, 0)) 
+    screen.fill((0, 0, 0))
     screen.blit(buffer, camera.offset)
     utils.draw_nine_slice_scaled(nine, screen, panel_rect, tile_size, 2)
 
-   
-   
     pygame.display.update()
     clock.tick(const.FPS)
 
