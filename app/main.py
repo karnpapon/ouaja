@@ -7,6 +7,7 @@ from . import utils
 from . import pyganim
 from easing_functions import *
 from pygame.locals import *
+import numpy as np
 import queue
 import pygame
 import pygame_textinput
@@ -237,6 +238,18 @@ def create_radial_gradient_surface(size, inner_color=(0, 0, 0, 0), outer_color=(
 
   return surface
 
+# def draw_node(sc, pos):
+#   color = 255, 0, 0
+#   pygame.draw.circle(sc, color, pos, 20)
+
+def draw_line_with_signal(sc, start, end, progress):
+  # pygame.draw.line(sc, (80, 80, 80), start, end, 2)
+  if 0 <= progress <= 1:
+    x = start[0] + (end[0] - start[0]) * progress
+    y = start[1] + (end[1] - start[1]) * progress
+    pygame.draw.circle(sc, (255, 0, 0), (int(x), int(y)), 6)
+
+
 
 # glow_base = create_radial_glow(160, (255, 0, 0), max_alpha=255)
 # glow_base = create_pixelated_glow(160, (255, 0, 0), steps=6, max_alpha=255)
@@ -253,8 +266,14 @@ def start():
   answer = ""
   current_answer = ""
   ouija_pos = None
-  total_time = 0
   glow_frame_counter = 0
+  # total_time = 0
+
+  activation_order = []
+  activation_index = 0
+  activation_interval = 500
+  signals = []
+  last_activation_time = pygame.time.get_ticks()
 
   border_image = pygame.image.load(
       "assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
@@ -283,6 +302,7 @@ def start():
   pygame.key.set_repeat(400, 25)
 
   while not states.quit_app:
+    current_time = pygame.time.get_ticks()
     try:
       reply = states.reply_answer.get(False)
     except queue.Empty:
@@ -292,7 +312,7 @@ def start():
       answer = reply
       answer = answer.upper()
       to = pygame.Vector2(
-          const.CHARACTERS[answer[answer_index]][0], const.CHARACTERS[answer[answer_index]][1])
+          const.CHARACTERS[answer[answer_index]]["pos"][0], const.CHARACTERS[answer[answer_index]]["pos"][1])
 
     events = pygame.event.get()
     textinput.update(events)
@@ -390,12 +410,14 @@ def start():
         current_answer = ""
         go_to_init_pos = False
       else:
+        activation_order.append(answer[answer_index].upper())
         current_answer += random.choice(
             [answer[answer_index].upper(), answer[answer_index].lower()])
         answer_index += 1
         fx_swirl.play()
         arg.client.send_message("/synth_shot", [const.MOVE_MODE])
         glow_frame_counter = GLOW_DURATION_FRAMES
+        
         # camera.start_shake()
 
         if answer_index < len(answer):
@@ -403,7 +425,7 @@ def start():
           timeout = const.FPS * const.TIMEOUT_FACTOR
           if const.CHARACTERS.get(char):
             to = pygame.Vector2(
-                const.CHARACTERS[char][0], const.CHARACTERS[char][1])
+                const.CHARACTERS[char]["pos"][0], const.CHARACTERS[char]["pos"][1])
         else:
           go_to_init_pos = True
 
@@ -463,8 +485,8 @@ def start():
         display_letter = letter.lower() if letter.isalpha() else letter
       color = bg_color if display_letter.isalpha() else text_color
       text = small_font.render(f"{display_letter}", True, color)
-      pos = [const.CHARACTERS[letter][0] + ouija_pos[0],
-             const.CHARACTERS[letter][1] + ouija_pos[1]]
+      pos = [const.CHARACTERS[letter]["pos"][0] + ouija_pos[0],
+             const.CHARACTERS[letter]["pos"][1] + ouija_pos[1]]
       buffer.blit(text, pos)
 
     utils.draw_text(
@@ -480,9 +502,9 @@ def start():
         entity.Move(to)
         if answer_index > 0:
           fx_swirl.blit(buffer, (
-              ((const.CHARACTERS[answer[answer_index - 1]][0] -
+              ((const.CHARACTERS[answer[answer_index - 1]]["pos"][0] -
                 swirl_fx_frames[0].get_width() / 2) + 10) + ouija_pos[0],
-              ((const.CHARACTERS[answer[answer_index - 1]][1] -
+              ((const.CHARACTERS[answer[answer_index - 1]]["pos"][1] -
                 swirl_fx_frames[0].get_height() / 2) + 10) + ouija_pos[1]
           ))
       elif (const.MOVE_MODE == 2):
@@ -505,6 +527,44 @@ def start():
     screen.fill((0, 0, 0))
     screen.blit(buffer, camera.offset)
     utils.draw_nine_slice_scaled(nine, screen, panel_rect, tile_size, 2)
+
+    # === Draw nodes and static connections ===
+    if activation_index < len(activation_order):
+      node_id = activation_order[activation_index]
+      # nodes[node_id]["activated"] = True
+      start_pos = const.CHARACTERS[node_id]["pos"]
+
+      for target_id in const.CHARACTERS[node_id]["nodes"]:
+        end_pos = const.CHARACTERS[target_id]["pos"]
+        end_pos_offset = (-22,35) if target_id == "O" else (-22,20)
+        signals.append({
+            "start": (start_pos[0] + 35 + ouija_pos[0], start_pos[1] + 24+ ouija_pos[1]),
+            "end": (end_pos[0] + end_pos_offset[0] + ouija_pos[0], end_pos[1] + end_pos_offset[1] + ouija_pos[1]),
+            "start_time": current_time,
+            "duration": 1000
+        })
+
+      activation_index += 1
+      last_activation_time = current_time
+    
+    new_signals = []
+    for sig in signals:
+      elapsed = current_time - sig["start_time"]
+      progress = elapsed / sig["duration"]
+
+      if progress < 1.0:
+        draw_line_with_signal(screen, sig["start"], sig["end"], progress)
+        new_signals.append(sig)
+      else:
+        # Reached the target — light it up!
+        for node_id, data in const.CHARACTERS.items():
+          if data["pos"] == sig["end"]:
+            # data["activated"] = True
+            arg.client.send_message("/synth_shot_nodes", [])
+            break
+    signals = new_signals
+
+    # ================================================
 
     pygame.display.update()
     clock.tick(const.FPS)
