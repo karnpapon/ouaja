@@ -4,19 +4,33 @@ HEIGHT = 540
 USER = "Person:"
 PROMPT_TEXT = "GHOST"
 
+STAGE_SCREEN = "menu" 
+
+OPENING_SENTENCE = "Signal the trace. We are listening..."
+
 INIT_POINT_X = 482 - 53
 INIT_POINT_Y = 50
 MAX_SPEED = 20
 TIMEOUT_FACTOR = 2
-FPS = 60
+FPS = 30
 VELOCITY = 2
 MOVE_MODE = 1 # 1: normal, 2: teleport
+ACTIVATE_NODES = 0 # 1: true, 0: false
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 PURPLE = (142, 68, 173)
+
+BG_COLOR = (0, 0, 0)  # B0AEA7
+TEXT_COLOR = (255, 0, 0)  # 312F28
+TEXT_LIGHTEST_COLOR = (255, 255, 255)  # 7D7866
+
+# Glow data
+GLOW_DURATION_FRAMES = 60
+GLOW_MAX_ALPHA = 200
+GLOW_DURATION = 1  # seconds to fade out
 
 CHARACTERS = {
   ' ': {"pos": (482-20, 482 + -26), "nodes": []},

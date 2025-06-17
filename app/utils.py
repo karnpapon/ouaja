@@ -146,3 +146,20 @@ def draw_border(screen: pygame.Surface, tile, screen_width, screen_height, tile_
   for y in range(0, screen_height, tile_size):
     screen.blit(tile, (0, y))  # Left
     screen.blit(tile, (screen_width - tile_size, y))  # Right
+
+def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
+  surface_rect = surface.get_rect()
+  return (
+      (surface_rect.width - screen_size[0]) // 2,
+      (surface_rect.height - screen_size[1]) // 2
+  )
+
+def blend_color(start_color, end_color, t):
+  return tuple(int(start + (end - start) * t) for start, end in zip(start_color, end_color))
+
+def draw_line_with_signal(sc, start, end, progress):
+  # pygame.draw.line(sc, (80, 80, 80), start, end, 2)
+  if 0 <= progress <= 1:
+    x = start[0] + (end[0] - start[0]) * progress
+    y = start[1] + (end[1] - start[1]) * progress
+    pygame.draw.circle(sc, (255, 255, 255), (int(x), int(y)), 8)
