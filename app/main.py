@@ -247,7 +247,7 @@ def draw_line_with_signal(sc, start, end, progress):
   if 0 <= progress <= 1:
     x = start[0] + (end[0] - start[0]) * progress
     y = start[1] + (end[1] - start[1]) * progress
-    pygame.draw.circle(sc, (255, 0, 0), (int(x), int(y)), 6)
+    pygame.draw.circle(sc, (255, 255, 255), (int(x), int(y)), 8)
 
 
 
@@ -271,9 +271,7 @@ def start():
 
   activation_order = []
   activation_index = 0
-  activation_interval = 500
   signals = []
-  last_activation_time = pygame.time.get_ticks()
 
   border_image = pygame.image.load(
       "assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
@@ -541,11 +539,10 @@ def start():
             "start": (start_pos[0] + 35 + ouija_pos[0], start_pos[1] + 24+ ouija_pos[1]),
             "end": (end_pos[0] + end_pos_offset[0] + ouija_pos[0], end_pos[1] + end_pos_offset[1] + ouija_pos[1]),
             "start_time": current_time,
-            "duration": 1000
+            "duration": 400
         })
 
       activation_index += 1
-      last_activation_time = current_time
     
     new_signals = []
     for sig in signals:
@@ -558,8 +555,13 @@ def start():
       else:
         # Reached the target — light it up!
         for node_id, data in const.CHARACTERS.items():
-          if data["pos"] == sig["end"]:
+          end_pos_offset = (22,-35) if node_id == "O" else (22,-20)
+          # revert offset to compare with const.CHARACTERS
+          end_sig_pos = (sig["end"][0] + end_pos_offset[0] + -ouija_pos[0], sig["end"][1] + end_pos_offset[1] + -ouija_pos[1])
+          if data["pos"] == end_sig_pos:
             # data["activated"] = True
+            activation_order.append(node_id.upper())
+            # activation_index += 1
             arg.client.send_message("/synth_shot_nodes", [])
             break
     signals = new_signals
