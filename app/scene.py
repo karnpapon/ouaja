@@ -9,11 +9,13 @@ from . import const
 from . import utils
 from . import arg
 from . import pyganim
+from .sprite import FXSprite
 
-class ScreenManager:
-  def __init__(self, screen):
+class SceneManager:
+  def __init__(self, screen, clock):
     self.screen = screen
     self.current_screen = None
+    self.clock = clock
 
   def switch_to(self, screen_factory):
     self.current_screen = screen_factory(self)
@@ -30,7 +32,7 @@ class ScreenManager:
 
 
 class BaseScreen:
-  def __init__(self, manager: ScreenManager):
+  def __init__(self, manager: SceneManager):
     self.manager = manager
     self.screen = manager.screen
 
@@ -39,6 +41,11 @@ class BaseScreen:
   def update(self): pass
   def draw(self, screen): pass
 
+class TransitionScene(BaseScreen):
+  def __init__(self, fromScenes, toScenes):
+    self.currentPercentage = 0
+    self.fromScenes = fromScenes
+    self.toScenes = toScenes
 
 class MenuScreen(BaseScreen):
   def __init__(self, manager, switch_to_game, textinput):
@@ -67,7 +74,6 @@ class MenuScreen(BaseScreen):
             if self.textinput.value.lower() == const.OPENING_SENTENCE.lower():
               self.switch_to_game()
 
-  def setup(self): pass
   def update(self): pass
 
   def draw(self):
@@ -75,14 +81,15 @@ class MenuScreen(BaseScreen):
     title = self.font.render(const.OPENING_SENTENCE, True, (255, 0, 0))
     self.screen.blit(self.textinput.surface, ((self.screen.get_width() // 2 - (title.get_width() // 2) ), (self.screen.get_height() // 2)))
 
-class GameScreen(BaseScreen):
+class GameScene(BaseScreen):
   def __init__(
       self,
-      manager: ScreenManager,
+      manager: SceneManager,
       camera,
       entity,
       textinput,
-      fx_swirl: pyganim.PygAnimation
+      fx_swirl: pyganim.PygAnimation,
+      total_duration_swirl_fx_frames
   ):
     super().__init__(manager)
     self.player_pos = [100, 100]
@@ -92,6 +99,7 @@ class GameScreen(BaseScreen):
     self.fx_swirl = fx_swirl
     self.textinput = textinput
     self.entity = entity
+    self.total_duration_swirl_fx_frames = total_duration_swirl_fx_frames
 
   def handle_events(self, events):
     self.textinput.update(events)
@@ -164,7 +172,7 @@ class GameScreen(BaseScreen):
             else:
               # question = const.USER + question.lower() + '\n'
               # question = textinput.value.lower() + '\n'
-              _answer = "Are You Ready???????"
+              _answer = "You you you???????"
               # answer = model.ask(question)
               # mockup_ans = random.choice(
               #     ["I am a ghost, so I don't have a gender."])
@@ -195,6 +203,7 @@ class GameScreen(BaseScreen):
     self.activation_index = 0
     self.signals = []
     self.answer_index = 0
+    self.all_sprites = pygame.sprite.Group()
 
     self.border_image = pygame.image.load(
         "assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
@@ -232,6 +241,7 @@ class GameScreen(BaseScreen):
     except queue.Empty:
       reply = None
 
+    
     if not reply == None and not states.abort:
       self.answer = reply
       self.answer = self.answer.upper()
@@ -241,7 +251,7 @@ class GameScreen(BaseScreen):
 
     self.camera.update()
     buffer = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-
+    ouija_pos = utils.get_center_position(buffer, (const.WIDTH, const.HEIGHT))
     if self.answer_index <= len(self.answer) and self.answer:
       if self.entity.position.distance_to(self.to) < 15 + 15:
         self.timeout -= 1
@@ -256,10 +266,20 @@ class GameScreen(BaseScreen):
           self.activation_order.append(self.answer[self.answer_index].upper())
         self.current_answer += random.choice(
             [self.answer[self.answer_index].upper(), self.answer[self.answer_index].lower()])
-        self.answer_index += 1
+
+        # fx_anim = self.fx_swirl.getCopy()
+        # fx_sprite = FXSprite(fx_anim, (
+        #     ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][0] -
+        #         self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
+        #     ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][1] -
+        #         self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
+        # ), self.total_duration_swirl_fx_frames)
         self.fx_swirl.play()
+        # self.all_sprites.add(fx_sprite)
+
         arg.client.send_message("/synth_shot", [const.MOVE_MODE])
         self.glow_frame_counter = const.GLOW_DURATION_FRAMES
+        self.answer_index += 1
 
         # camera.start_shake()
 
@@ -280,8 +300,6 @@ class GameScreen(BaseScreen):
       bg_color = (0, 0, 0)
 
     buffer.fill(bg_color)
-
-    ouija_pos = utils.get_center_position(buffer, (const.WIDTH, const.HEIGHT))
     buffer.blit(self.bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
     buffer.blit(self.bg, (0+ouija_pos[0], 0+ouija_pos[1]))
 
@@ -343,7 +361,9 @@ class GameScreen(BaseScreen):
     if (self.answer):
       if (const.MOVE_MODE == 1):
         self.entity.Move(self.to)
-        if self.answer_index > 0:
+        if self.answer_index > 0: 
+          # self.all_sprites.update(current_time) 
+          # self.all_sprites.draw(buffer)
           self.fx_swirl.blit(buffer, (
               ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][0] -
                 self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
