@@ -37,7 +37,8 @@ swirl_fx_frames = [pygame.image.load(
     path).convert_alpha() for path in swirl_fx_frame_paths]
 
 replace_color_swirl_fx_frames = [
-    utils.replace_color(frame, const.TEXT_COLOR, const.TEXT_LIGHTEST_COLOR, tolerance=0)
+    utils.replace_color(frame, const.TEXT_COLOR,
+                        const.TEXT_LIGHTEST_COLOR, tolerance=0)
     for frame in swirl_fx_frames
 ]
 
@@ -50,8 +51,8 @@ fx_swirl.scale((swirl_fx_frames[0].get_width(),
 
 clock = pygame.time.Clock()
 
-font_input = pygame.font.Font( "assets/fonts/ArgentPixelCF-Italic.otf", 42)
-textinput = pygame_textinput.TextInputVisualizer( font_object=font_input)
+font_input = pygame.font.Font("assets/fonts/ArgentPixelCF-Italic.otf", 42)
+textinput = pygame_textinput.TextInputVisualizer(font_object=font_input)
 textinput.font_color = const.TEXT_COLOR
 textinput.cursor_width = 2
 textinput.cursor_color = const.TEXT_COLOR
@@ -115,30 +116,32 @@ entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y, const.RED)
 camera = Camera()
 
 def main():
-    manager = screen_manager.ScreenManager(screen)
+  manager = screen_manager.ScreenManager(screen)
 
-    def switch_to_game():
-      manager.switch_to(partial(screen_manager.GameScreen, camera=camera, entity=entity, textinput=textinput, fx_swirl=fx_swirl ))
+  def switch_to_game():
+    manager.switch_to(partial(screen_manager.GameScreen, camera=camera,
+                      entity=entity, textinput=textinput, fx_swirl=fx_swirl))
 
-    manager.switch_to(partial(screen_manager.MenuScreen, switch_to_game=switch_to_game))
+  manager.switch_to(partial(screen_manager.MenuScreen,
+                    switch_to_game=switch_to_game))
 
-    running = True
-    while running:
-        events = pygame.event.get()
-        for event in events:
-            if event.type == pygame.QUIT:
-                running = False
+  running = True
+  while running:
+    events = pygame.event.get()
+    for event in events:
+      if event.type == pygame.QUIT:
+        running = False
 
-        manager.handle_events(events)
-        manager.update()
-        manager.draw()
+    manager.handle_events(events)
+    manager.update()
+    manager.draw()
 
-        pygame.display.flip()
-        clock.tick(60)
+    pygame.display.flip()
+    clock.tick(60)
 
-    pygame.quit()
-    sys.exit()
+  pygame.quit()
+  sys.exit()
 
 
 if __name__ == "__main__":
-    main()
+  main()

@@ -44,7 +44,7 @@ class MenuScreen(BaseScreen):
   def __init__(self, manager, switch_to_game):
     super().__init__(manager)
     self.button_rect = pygame.Rect(300, 350, 200, 60)
-    self.font = pygame.font.SysFont(None, 48)
+    self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
     self.switch_to_game = switch_to_game
 
   def handle_events(self, events):
@@ -57,12 +57,13 @@ class MenuScreen(BaseScreen):
   def update(self): pass
 
   def draw(self):
-    self.screen.fill((30, 30, 30))
-    title = self.font.render(const.OPENING_SENTENCE, True, (255, 255, 255))
-    self.screen.blit(title, (400 - title.get_width() // 2, 150))
-    pygame.draw.rect(self.screen, (0, 200, 0), self.button_rect)
-    pygame.draw.rect(self.screen, (255, 255, 255), self.button_rect, 3)
-    label = self.font.render("Start Game", True, (0, 0, 0))
+    self.screen.fill((0, 0, 0))
+    title = self.font.render(const.OPENING_SENTENCE, True, (255, 0, 0))
+    self.screen.blit(title, (self.screen.get_width() - title.get_width() //
+                     2, self.screen.get_height() - title.get_height() // 2))
+    # pygame.draw.rect(self.screen, (0, 200, 0), self.button_rect)
+    # pygame.draw.rect(self.screen, (255, 255, 255), self.button_rect, 3)
+    label = self.font.render("Start Game", True, (255, 0, 0))
     self.screen.blit(label, (
         self.button_rect.centerx - label.get_width() // 2,
         self.button_rect.centery - label.get_height() // 2
@@ -87,6 +88,7 @@ class GameScreen(BaseScreen):
     self.entity = entity
 
   def handle_events(self, events):
+    self.textinput.update(events)
     for event in events:
       if event.type == pygame.QUIT:
         pygame.quit()
@@ -98,7 +100,7 @@ class GameScreen(BaseScreen):
             pygame.display.set_mode((const.WIDTH, const.HEIGHT))
           else:
             pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-          panel_rect = pygame.Rect(
+          self.panel_rect = pygame.Rect(
               0, 0, self.screen.get_width(), self.screen.get_height())
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
@@ -120,7 +122,7 @@ class GameScreen(BaseScreen):
                   print("MOVE_MODE accept 1 or 2")
               elif cmd[0] == ";;move_to":
                 move_to = ast.literal_eval(cmd[1])
-                to = pygame.Vector2(move_to)
+                self.to = pygame.Vector2(move_to)
                 answer = " "
               elif cmd[0] == ";;set_activate_nodes":
                 try:
@@ -144,7 +146,7 @@ class GameScreen(BaseScreen):
                 answer = " "
                 states.reply_answer.empty()
                 states.abort = False
-                to = pygame.Vector2(700, 50)
+                self.to = pygame.Vector2(700, 50)
                 # pygame.quit()
                 # sys.exit()
               # elif cmd[0] == "::BREAK":
@@ -227,22 +229,19 @@ class GameScreen(BaseScreen):
     if not reply == None and not states.abort:
       self.answer = reply
       self.answer = self.answer.upper()
-      to = pygame.Vector2(
+      self.to = pygame.Vector2(
           const.CHARACTERS[self.answer[self.answer_index]]["pos"][0],
           const.CHARACTERS[self.answer[self.answer_index]]["pos"][1])
-
-    events = pygame.event.get()
-    self.textinput.update(events)
 
     self.camera.update()
     buffer = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
 
     if self.answer_index <= len(self.answer) and self.answer:
-      if self.entity.position.distance_to(to) < 15 + 15:
+      if self.entity.position.distance_to(self.to) < 15 + 15:
         self.timeout -= 1
 
     if self.timeout == 0:
-      if to == pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
+      if self.to == pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
         self.timeout = const.FPS * const.TIMEOUT_FACTOR
         self.current_answer = ""
         self.go_to_init_pos = False
@@ -262,7 +261,7 @@ class GameScreen(BaseScreen):
           char = self.answer[self.answer_index].upper()
           self.timeout = const.FPS * const.TIMEOUT_FACTOR
           if const.CHARACTERS.get(char):
-            to = pygame.Vector2(
+            self.to = pygame.Vector2(
                 const.CHARACTERS[char]["pos"][0], const.CHARACTERS[char]["pos"][1])
         else:
           self.go_to_init_pos = True
@@ -297,9 +296,9 @@ class GameScreen(BaseScreen):
     #     (entity.position.y-(60-ouija_pos[1]))
     #   ))
 
-    if self.go_to_init_pos and to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
+    if self.go_to_init_pos and self.to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
       self.answer_index = 0
-      to = pygame.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y)
+      self.to = pygame.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y)
       # self.current_answer = ""
       self.timeout = const.FPS * const.TIMEOUT_FACTOR
 
@@ -337,7 +336,7 @@ class GameScreen(BaseScreen):
 
     if (self.answer):
       if (const.MOVE_MODE == 1):
-        self.entity.Move(to)
+        self.entity.Move(self.to)
         if self.answer_index > 0:
           self.fx_swirl.blit(buffer, (
               ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][0] -
@@ -346,7 +345,7 @@ class GameScreen(BaseScreen):
                 self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
           ))
       elif (const.MOVE_MODE == 2):
-        self.entity.Teleport(to)
+        self.entity.Teleport(self.to)
 
     self.entity.Draw(buffer, ouija_pos)
     arg.client.send_message(
@@ -370,8 +369,8 @@ class GameScreen(BaseScreen):
 
     # === Draw nodes and static connections ===
     if const.ACTIVATE_NODES:
-      if activation_index < len(self.activation_order):
-        node_id = self.activation_order[activation_index]
+      if self.activation_index < len(self.activation_order):
+        node_id = self.activation_order[self.activation_index]
         # nodes[node_id]["activated"] = True
         start_pos = const.CHARACTERS[node_id]["pos"]
 
@@ -385,10 +384,10 @@ class GameScreen(BaseScreen):
               "duration": 400
           })
 
-        activation_index += 1
+        self.activation_index += 1
 
       new_signals = []
-      for sig in signals:
+      for sig in self.signals:
         elapsed = current_time - sig["start_time"]
         progress = elapsed / sig["duration"]
 
@@ -409,4 +408,4 @@ class GameScreen(BaseScreen):
               # activation_index += 1
               arg.client.send_message("/synth_shot", [])
               break
-      signals = new_signals
+      self.signals = new_signals

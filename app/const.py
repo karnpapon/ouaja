@@ -15,7 +15,7 @@ TIMEOUT_FACTOR = 2
 FPS = 30
 VELOCITY = 2
 MOVE_MODE = 1 # 1: normal, 2: teleport
-ACTIVATE_NODES = 0 # 1: true, 0: false
+ACTIVATE_NODES = 1 # 1: true, 0: false
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
