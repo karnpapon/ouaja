@@ -8,7 +8,7 @@ import pygame_textinput
 import sys
 import os
 import random
-from .scene import SceneManager, GameScene, MenuScene, FadeTransitionScene 
+from .scene import SceneManager, GameScene, MenuScene 
 from functools import partial
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'

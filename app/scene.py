@@ -47,7 +47,7 @@ class TransitionScene(BaseScreen):
     self.fromScenes = fromScenes
     self.toScenes = toScenes
 
-class MenuScreen(BaseScreen):
+class MenuScene(BaseScreen):
   def __init__(self, manager, switch_to_game, textinput):
     super().__init__(manager)
     self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
