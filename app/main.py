@@ -57,6 +57,12 @@ textinput.font_color = const.TEXT_COLOR
 textinput.cursor_width = 2
 textinput.cursor_color = const.TEXT_COLOR
 
+font_input_intro = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
+textinput_intro = pygame_textinput.TextInputVisualizer(font_object=font_input_intro)
+textinput_intro.font_color = const.TEXT_COLOR
+textinput_intro.cursor_width = 2
+textinput_intro.cursor_color = const.TEXT_COLOR
+
 class Entity(object):
   def __init__(self, x, y, color):
     self.color = color
@@ -123,7 +129,7 @@ def main():
                       entity=entity, textinput=textinput, fx_swirl=fx_swirl))
 
   manager.switch_to(partial(screen_manager.MenuScreen,
-                    switch_to_game=switch_to_game))
+                    switch_to_game=switch_to_game, textinput=textinput_intro))
 
   running = True
   while running:

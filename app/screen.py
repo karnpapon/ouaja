@@ -41,17 +41,31 @@ class BaseScreen:
 
 
 class MenuScreen(BaseScreen):
-  def __init__(self, manager, switch_to_game):
+  def __init__(self, manager, switch_to_game, textinput):
     super().__init__(manager)
-    self.button_rect = pygame.Rect(300, 350, 200, 60)
     self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
     self.switch_to_game = switch_to_game
+    self.textinput = textinput
 
   def handle_events(self, events):
+    self.textinput.update(events)
     for event in events:
-      if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-        if self.button_rect.collidepoint(event.pos):
-          self.switch_to_game()
+      if event.type == pygame.QUIT:
+        pygame.quit()
+        sys.exit()
+      elif event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_f and pygame.key.get_mods() & pygame.KMOD_CTRL:
+          states.is_fullscreen = not states.is_fullscreen
+          if states.is_fullscreen:
+            pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+          else:
+            pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+          self.panel_rect = pygame.Rect(
+              0, 0, self.screen.get_width(), self.screen.get_height())
+        elif event.key == pygame.K_RETURN:
+          if self.textinput.value != "":
+            if self.textinput.value.lower() == const.OPENING_SENTENCE.lower():
+              self.switch_to_game()
 
   def setup(self): pass
   def update(self): pass
@@ -59,15 +73,7 @@ class MenuScreen(BaseScreen):
   def draw(self):
     self.screen.fill((0, 0, 0))
     title = self.font.render(const.OPENING_SENTENCE, True, (255, 0, 0))
-    self.screen.blit(title, (self.screen.get_width() - title.get_width() //
-                     2, self.screen.get_height() - title.get_height() // 2))
-    # pygame.draw.rect(self.screen, (0, 200, 0), self.button_rect)
-    # pygame.draw.rect(self.screen, (255, 255, 255), self.button_rect, 3)
-    label = self.font.render("Start Game", True, (255, 0, 0))
-    self.screen.blit(label, (
-        self.button_rect.centerx - label.get_width() // 2,
-        self.button_rect.centery - label.get_height() // 2
-    ))
+    self.screen.blit(self.textinput.surface, ((self.screen.get_width() // 2 - (title.get_width() // 2) ), (self.screen.get_height() // 2)))
 
 class GameScreen(BaseScreen):
   def __init__(
