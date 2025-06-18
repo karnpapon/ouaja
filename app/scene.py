@@ -157,7 +157,7 @@ class GameScene(BaseScreen):
                 const.TIMEOUT_FACTOR = 2
               elif cmd[0] == ";;bye":
                 const.TIMEOUT_FACTOR = 2
-                answer = " "
+                self.answer = " "
                 states.reply_answer.empty()
                 states.abort = False
                 self.to = pygame.Vector2(700, 50)

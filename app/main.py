@@ -142,8 +142,8 @@ def main():
     manager.switch_to(partial(GameScene, camera=camera,
                       entity=entity, textinput=textinput, fx_swirl=fx_swirl, total_duration_swirl_fx_frames=total_duration_swirl_fx_frames))
 
-  # manager.switch_to(lambda mngr: MenuScene(mngr, switch_to_game, textinput_intro))
-  switch_to_game()
+  manager.switch_to(lambda mngr: MenuScene(mngr, switch_to_game, textinput_intro))
+  # switch_to_game()
 
   running = True
   while running:
