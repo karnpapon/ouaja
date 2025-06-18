@@ -7,8 +7,9 @@ import pygame
 import pygame_textinput
 import sys
 import os
-import random
 from .scene import SceneManager, GameScene, MenuScene 
+from .entity import Entity
+from .camera import Camera
 from functools import partial
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
@@ -19,64 +20,6 @@ textinput_intro = pygame_textinput.TextInputVisualizer(font_object=font_input_in
 textinput_intro.font_color = const.TEXT_COLOR
 textinput_intro.cursor_width = 2
 textinput_intro.cursor_color = const.TEXT_COLOR
-
-class Entity(object):
-  def __init__(self, x, y, color, spriteAnim: pygame.Surface, soul_frames: pygame.Surface):
-    self.color = color
-    self.position = pygame.Vector2(x, y)
-    self.velocity = pygame.Vector2(const.VELOCITY, const.VELOCITY)
-    self.acceleration = pygame.Vector2(0.5, 0.5)
-    self.friction = 0.95
-    self.spriteAnim = spriteAnim
-    self.soul_frames = soul_frames
-
-  def Draw(self, buffer, ouija_pos):
-    self.spriteAnim.blit(buffer, (
-        ((self.position.x - self.soul_frames.get_width() / 2)) + ouija_pos[0],
-        ((self.position.y -
-         self.soul_frames.get_height() / 2) - 25 + ouija_pos[1])
-    ))
-
-  def Move(self, to: pygame.Vector2):
-    target = to
-    dir = target - self.position
-
-    if (dir.x == 0 and dir.y == 0):
-      return
-
-    self.velocity.x = self.velocity.x * self.friction + \
-        self.acceleration.x * dir.normalize().x
-    self.velocity.y = self.velocity.y * self.friction + \
-        self.acceleration.y * dir.normalize().y
-    self.velocity.x = max(-const.MAX_SPEED,
-                          min(const.MAX_SPEED, self.velocity.x))
-    self.velocity.y = max(-const.MAX_SPEED,
-                          min(const.MAX_SPEED, self.velocity.y))
-    self.position.x += self.velocity.x
-    self.position.y += self.velocity.y
-
-  def Teleport(self, to: pygame.Vector2):
-    self.position.x = to.x
-    self.position.y = to.y
-    return
-class Camera:
-  def __init__(self):
-    self.offset = pygame.Vector2(0, 0)
-    self.duration = 0
-    self.intensity = 0
-
-  def start_shake(self, duration=6, intensity=3):
-    self.duration = duration
-    self.intensity = intensity
-
-  def update(self):
-    if self.duration > 0:
-      self.offset.x = random.randint(-self.intensity, self.intensity)
-      self.offset.y = random.randint(-self.intensity, self.intensity)
-      self.duration -= 1
-    else:
-      self.offset = pygame.Vector2(0, 0)
-
 
 def main():
   pygame.init()

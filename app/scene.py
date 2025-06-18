@@ -13,9 +13,25 @@ from .sprite import FXSprite
 
 class SceneManager:
   def __init__(self, screen, clock):
+    self.scenes = []
     self.screen = screen
     self.current_screen = None
     self.clock = clock
+
+  def isEmpty(self):
+    return len(self.scenes) == 0
+
+  def enterScene(self):
+    if len(self.scenes) > 0:
+      self.scenes[-1].onEnter()
+
+  def exitScene(self):
+    if len(self.scenes) > 0:
+      self.scenes[-1].onExit()
+
+  def input(self, inputStream):
+    if len(self.scenes) > 0:
+      self.scenes[-1].input(self, inputStream)
 
   def switch_to(self, screen_factory):
     self.current_screen = screen_factory(self)
@@ -30,29 +46,85 @@ class SceneManager:
   def draw(self):
     self.current_screen.draw()
 
+  def push(self, scene):
+    self.exitScene()
+    self.scenes.append(scene)
+    self.enterScene()
 
-class BaseScreen:
+  def pop(self):
+    self.exitScene()
+    self.scenes.pop()
+    self.enterScene()
+
+  def set(self, scenes):
+    while len(self.scenes) > 0:
+      self.pop()
+    for s in scenes:
+      self.push(s)
+
+
+class BaseScene:
   def __init__(self, manager: SceneManager):
     self.manager = manager
     self.screen = manager.screen
 
+  def on_enter(self): pass
+  def on_exit(self): pass
   def handle_events(self, events, screen): pass
   def setup(self): pass
   def update(self): pass
   def draw(self, screen): pass
 
-class TransitionScene(BaseScreen):
+class TransitionScene(BaseScene):
   def __init__(self, fromScenes, toScenes):
     self.currentPercentage = 0
     self.fromScenes = fromScenes
     self.toScenes = toScenes
 
-class MenuScene(BaseScreen):
+  def update(self, sm, inputStream):
+    self.currentPercentage += 2
+    if self.currentPercentage >= 100:
+      sm.pop()
+      for s in self.toScenes:
+        sm.push(s)
+    for scene in self.fromScenes:
+      scene.update(sm, inputStream)
+    if len(self.toScenes) > 0:
+      for scene in self.toScenes:
+        scene.update(sm, inputStream)
+    else:
+      if len(sm.scenes) > 1:
+        sm.scenes[-2].update(sm, inputStream)
+
+class FadeTransitionScene(TransitionScene):
+  def draw(self, sm, screen):
+    if self.currentPercentage < 50:
+      for s in self.fromScenes:
+        s.draw(sm, screen)
+    else:
+      if len(self.toScenes) == 0:
+        if len(sm.scenes) > 1:
+          sm.scenes[-2].draw(sm, screen)
+      else:
+        for s in self.toScenes:
+          s.draw(sm, screen)
+
+    # fade overlay
+    overlay = pygame.Surface((830, 830))
+    alpha = int(abs((255 - ((255/50)*self.currentPercentage))))
+    overlay.set_alpha(255 - alpha)
+    overlay.fill(const.BG_COLOR)
+    screen.blit(overlay, (0, 0))
+
+class MenuScene(BaseScene):
   def __init__(self, manager, switch_to_game, textinput):
     super().__init__(manager)
     self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
     self.switch_to_game = switch_to_game
     self.textinput = textinput
+
+  def on_enter(self): pass
+  def on_exit(self): pass
 
   def handle_events(self, events):
     self.textinput.update(events)
@@ -79,9 +151,10 @@ class MenuScene(BaseScreen):
   def draw(self):
     self.screen.fill((0, 0, 0))
     title = self.font.render(const.OPENING_SENTENCE, True, (255, 0, 0))
-    self.screen.blit(self.textinput.surface, ((self.screen.get_width() // 2 - (title.get_width() // 2) ), (self.screen.get_height() // 2)))
+    self.screen.blit(self.textinput.surface, ((self.screen.get_width(
+    ) // 2 - (title.get_width() // 2)), (self.screen.get_height() // 2)))
 
-class GameScene(BaseScreen):
+class GameScene(BaseScene):
   def __init__(
       self,
       manager: SceneManager,
@@ -100,6 +173,9 @@ class GameScene(BaseScreen):
     self.textinput = textinput
     self.entity = entity
     self.total_duration_swirl_fx_frames = total_duration_swirl_fx_frames
+
+  def on_enter(self): pass
+  def on_exit(self): pass
 
   def handle_events(self, events):
     self.textinput.update(events)
@@ -241,7 +317,6 @@ class GameScene(BaseScreen):
     except queue.Empty:
       reply = None
 
-    
     if not reply == None and not states.abort:
       self.answer = reply
       self.answer = self.answer.upper()
@@ -361,8 +436,8 @@ class GameScene(BaseScreen):
     if (self.answer):
       if (const.MOVE_MODE == 1):
         self.entity.Move(self.to)
-        if self.answer_index > 0: 
-          # self.all_sprites.update(current_time) 
+        if self.answer_index > 0:
+          # self.all_sprites.update(current_time)
           # self.all_sprites.draw(buffer)
           self.fx_swirl.blit(buffer, (
               ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][0] -
