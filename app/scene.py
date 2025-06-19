@@ -1,5 +1,6 @@
 import sys
 import pygame
+import pygame_textinput
 import re
 import ast
 import random
@@ -9,42 +10,40 @@ from . import const
 from . import utils
 from . import arg
 from . import pyganim
-from .sprite import FXSprite
+from .entity import Entity
+from .camera import Camera
 
 class SceneManager:
-  def __init__(self, screen, clock):
+  def __init__(self):
     self.scenes = []
-    self.screen = screen
-    self.current_screen = None
-    self.clock = clock
 
   def isEmpty(self):
     return len(self.scenes) == 0
 
   def enterScene(self):
     if len(self.scenes) > 0:
-      self.scenes[-1].onEnter()
+      scene = self.scenes[-1]
+      if not scene.setup_done:
+        scene.setup()
+        scene.setup_done = True
+      scene.on_enter()
 
   def exitScene(self):
     if len(self.scenes) > 0:
-      self.scenes[-1].onExit()
+      self.scenes[-1].on_exit()
 
-  def input(self, inputStream):
+  def input(self, event):
     if len(self.scenes) > 0:
-      self.scenes[-1].input(self, inputStream)
+      self.scenes[-1].handle_events(self, event)
 
-  def switch_to(self, screen_factory):
-    self.current_screen = screen_factory(self)
-    self.current_screen.setup()
+  def update(self, events):
+    if len(self.scenes) > 0:
+      self.scenes[-1].update(self, events)
 
-  def handle_events(self, events):
-    self.current_screen.handle_events(events)
-
-  def update(self):
-    self.current_screen.update()
-
-  def draw(self):
-    self.current_screen.draw()
+  def draw(self, screen):
+    if len(self.scenes) > 0:
+      self.scenes[-1].draw(self, screen)
+    pygame.display.flip()
 
   def push(self, scene):
     self.exitScene()
@@ -62,71 +61,29 @@ class SceneManager:
     for s in scenes:
       self.push(s)
 
-
 class BaseScene:
-  def __init__(self, manager: SceneManager):
-    self.manager = manager
-    self.screen = manager.screen
+  def __init__(self):
+    self.setup_done = False
 
   def on_enter(self): pass
   def on_exit(self): pass
-  def handle_events(self, events, screen): pass
+  def handle_events(self, sm, events): pass
   def setup(self): pass
-  def update(self): pass
-  def draw(self, screen): pass
-
-class TransitionScene(BaseScene):
-  def __init__(self, fromScenes, toScenes):
-    self.currentPercentage = 0
-    self.fromScenes = fromScenes
-    self.toScenes = toScenes
-
-  def update(self, sm, inputStream):
-    self.currentPercentage += 2
-    if self.currentPercentage >= 100:
-      sm.pop()
-      for s in self.toScenes:
-        sm.push(s)
-    for scene in self.fromScenes:
-      scene.update(sm, inputStream)
-    if len(self.toScenes) > 0:
-      for scene in self.toScenes:
-        scene.update(sm, inputStream)
-    else:
-      if len(sm.scenes) > 1:
-        sm.scenes[-2].update(sm, inputStream)
-
-class FadeTransitionScene(TransitionScene):
-  def draw(self, sm, screen):
-    if self.currentPercentage < 50:
-      for s in self.fromScenes:
-        s.draw(sm, screen)
-    else:
-      if len(self.toScenes) == 0:
-        if len(sm.scenes) > 1:
-          sm.scenes[-2].draw(sm, screen)
-      else:
-        for s in self.toScenes:
-          s.draw(sm, screen)
-
-    # fade overlay
-    overlay = pygame.Surface((830, 830))
-    alpha = int(abs((255 - ((255/50)*self.currentPercentage))))
-    overlay.set_alpha(255 - alpha)
-    overlay.fill(const.BG_COLOR)
-    screen.blit(overlay, (0, 0))
+  def update(self, sm, events): pass
+  def draw(self, sm, screen): pass
 
 class MenuScene(BaseScene):
-  def __init__(self, manager, switch_to_game, textinput):
-    super().__init__(manager)
+  def __init__(self, textinput: pygame_textinput.TextInputVisualizer):
+    super().__init__()
     self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
-    self.switch_to_game = switch_to_game
     self.textinput = textinput
+    pygame.key.set_repeat(400, 25)
 
   def on_enter(self): pass
   def on_exit(self): pass
+  def setup(self): pass
 
-  def handle_events(self, events):
+  def handle_events(self, sm: SceneManager, events):
     self.textinput.update(events)
     for event in events:
       if event.type == pygame.QUIT:
@@ -140,31 +97,59 @@ class MenuScene(BaseScene):
           else:
             pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
           self.panel_rect = pygame.Rect(
-              0, 0, self.screen.get_width(), self.screen.get_height())
+              0, 0, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
             if self.textinput.value.lower() == const.OPENING_SENTENCE.lower():
-              self.switch_to_game()
+              sm.push(FadeTransitionScene([self], [GameScene(self.textinput)]))
 
-  def update(self): pass
+  def update(self, sm, events): pass
 
-  def draw(self):
-    self.screen.fill((0, 0, 0))
+  def draw(self, sm, screen: pygame.Surface):
+    screen.fill((0, 0, 0))
     title = self.font.render(const.OPENING_SENTENCE, True, (255, 0, 0))
-    self.screen.blit(self.textinput.surface, ((self.screen.get_width(
-    ) // 2 - (title.get_width() // 2)), (self.screen.get_height() // 2)))
+    screen.blit(self.textinput.surface, ((screen.get_width(
+    ) // 2 - (title.get_width() // 2)), (screen.get_height() // 2)))
 
 class GameScene(BaseScene):
-  def __init__(
-      self,
-      manager: SceneManager,
-      camera,
-      entity,
-      textinput,
-      fx_swirl: pyganim.PygAnimation,
-      total_duration_swirl_fx_frames
-  ):
-    super().__init__(manager)
+  def __init__(self, textinput: pygame_textinput.TextInputVisualizer):
+    super().__init__()
+    # Load soul animation frames dynamically
+    soul_frame_paths = [
+        f"assets/sprites/soul/soul_{i}.png" for i in range(1, 9)
+    ]
+    soul_frames = [pygame.image.load(path).convert_alpha()
+                   for path in soul_frame_paths]
+
+    spriteAnim = pyganim.PygAnimation([(frame, 0.1) for frame in soul_frames])
+    spriteAnim.scale((soul_frames[0].get_width() * 5,
+                      soul_frames[0].get_height() * 5))
+    spriteAnim.play()
+
+    # Load swirl effect frames dynamically and apply color replacement
+    swirl_fx_frame_paths = [
+        f"assets/sprites/swirl/frame_{i:02d}.png" for i in range(17)
+    ]
+    swirl_fx_frames = [pygame.image.load(
+        path).convert_alpha() for path in swirl_fx_frame_paths]
+
+    replace_color_swirl_fx_frames = [
+        utils.replace_color(frame, const.TEXT_COLOR,
+                            const.TEXT_LIGHTEST_COLOR, tolerance=0)
+        for frame in swirl_fx_frames
+    ]
+
+    fx_swirl = pyganim.PygAnimation(
+        [(frame, 0.05) for frame in replace_color_swirl_fx_frames],
+        loop=False
+    )
+    fx_swirl.scale((swirl_fx_frames[0].get_width(),
+                    swirl_fx_frames[0].get_height()))
+
+    entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y,
+                    const.RED, spriteAnim, soul_frames[0])
+    camera = Camera()
+
     self.player_pos = [100, 100]
     self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
     self.small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
@@ -172,12 +157,11 @@ class GameScene(BaseScene):
     self.fx_swirl = fx_swirl
     self.textinput = textinput
     self.entity = entity
-    self.total_duration_swirl_fx_frames = total_duration_swirl_fx_frames
 
   def on_enter(self): pass
   def on_exit(self): pass
 
-  def handle_events(self, events):
+  def handle_events(self, sm, events):
     self.textinput.update(events)
     for event in events:
       if event.type == pygame.QUIT:
@@ -191,7 +175,7 @@ class GameScene(BaseScene):
           else:
             pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
           self.panel_rect = pygame.Rect(
-              0, 0, self.screen.get_width(), self.screen.get_height())
+              0, 0, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
             # match commands with prefix (::).
@@ -213,7 +197,7 @@ class GameScene(BaseScene):
               elif cmd[0] == ";;move_to":
                 move_to = ast.literal_eval(cmd[1])
                 self.to = pygame.Vector2(move_to)
-                answer = " "
+                self.answer = " "
               elif cmd[0] == ";;set_activate_nodes":
                 try:
                   const.ACTIVATE_NODES = utils.clamp(0, int(cmd[1]), 1)
@@ -286,16 +270,16 @@ class GameScene(BaseScene):
     self.tile_size = 32
     self.nine = utils.slice_nine(self.border_image, self.tile_size)
     self.panel_rect = pygame.Rect(
-        0, 0, self.screen.get_width(), self.screen.get_height())
+        0, 0, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
 
     self.border_image_2 = pygame.image.load(
         "assets/ui/hexany/Panels/Transparent/simple.png").convert_alpha()
     self.nine_2 = utils.slice_nine(self.border_image_2, self.tile_size)
-    self.msg_box_w = self.screen.get_width() // 2
-    self.msg_box_h = self.screen.get_height() // 6
+    self.msg_box_w = pygame.display.get_window_size()[0] // 2
+    self.msg_box_h = pygame.display.get_window_size()[1] // 6
     self.panel_input_msg_box_rect = pygame.Rect(
-        self.screen.get_width() / 2 - (self.msg_box_w / 2),
-        self.screen.get_height() - (self.msg_box_h / 2),
+        pygame.display.get_window_size()[0] / 2 - (self.msg_box_w / 2),
+        pygame.display.get_window_size()[1] - (self.msg_box_h / 2),
         self.msg_box_w,
         self.msg_box_h
     )
@@ -308,9 +292,9 @@ class GameScene(BaseScene):
 
     pygame.key.set_repeat(400, 25)
 
-  def update(self): pass
+  def update(self, sm, events): pass
 
-  def draw(self):
+  def draw(self, sm, screen: pygame.Surface):
     current_time = pygame.time.get_ticks()
     try:
       reply = states.reply_answer.get(False)
@@ -325,8 +309,9 @@ class GameScene(BaseScene):
           const.CHARACTERS[self.answer[self.answer_index]]["pos"][1])
 
     self.camera.update()
-    buffer = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+    buffer = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
     ouija_pos = utils.get_center_position(buffer, (const.WIDTH, const.HEIGHT))
+
     if self.answer_index <= len(self.answer) and self.answer:
       if self.entity.position.distance_to(self.to) < 15 + 15:
         self.timeout -= 1
@@ -452,10 +437,10 @@ class GameScene(BaseScene):
     arg.client.send_message(
         "/synth_coord", [self.entity.position.x / const.WIDTH, 1.0 - self.entity.position.y / const.HEIGHT])
 
-    self.panel_input_msg_box_rect.width = self.screen.get_width() / 2
+    self.panel_input_msg_box_rect.width = screen.get_width() / 2
     self.panel_input_msg_box_rect.x = (
-        self.screen.get_width() / 2 - ouija_pos[0]) - 90
-    self.panel_input_msg_box_rect.y = self.screen.get_height() - ouija_pos[1]
+        screen.get_width() / 2 - ouija_pos[0]) - 90
+    self.panel_input_msg_box_rect.y = screen.get_height() - ouija_pos[1]
 
     buffer.blit(self.textinput.surface, (self.panel_input_msg_box_rect.x +
                 25, self.panel_input_msg_box_rect.y + 14))
@@ -463,10 +448,10 @@ class GameScene(BaseScene):
     # draw_nine_slice_scaled(
     #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
-    self.screen.fill((0, 0, 0))
-    self.screen.blit(buffer, self.camera.offset)
+    screen.fill((0, 0, 0))
+    screen.blit(buffer, self.camera.offset)
     utils.draw_nine_slice_scaled(
-        self.nine, self.screen, self.panel_rect, self.tile_size, 2)
+        self.nine, screen, self.panel_rect, self.tile_size, 2)
 
     # === Draw nodes and static connections ===
     if const.ACTIVATE_NODES:
@@ -494,7 +479,7 @@ class GameScene(BaseScene):
 
         if progress < 1.0:
           utils.draw_line_with_signal(
-              self.screen, sig["start"], sig["end"], progress)
+              screen, sig["start"], sig["end"], progress)
           new_signals.append(sig)
         else:
           # Reached the target — light it up!
@@ -510,3 +495,46 @@ class GameScene(BaseScene):
               arg.client.send_message("/synth_shot", [])
               break
       self.signals = new_signals
+
+class TransitionScene(BaseScene):
+  def __init__(self, fromScenes, toScenes):
+    super().__init__()
+    self.currentPercentage = 0
+    self.fromScenes = fromScenes
+    self.toScenes = toScenes
+
+  def update(self, sm, events):
+    self.currentPercentage += 2
+    if self.currentPercentage >= 100:
+      sm.pop()
+      for s in self.toScenes:
+        sm.push(s)
+    for scene in self.fromScenes:
+      scene.update(sm, events)
+    if len(self.toScenes) > 0:
+      for scene in self.toScenes:
+        scene.setup()
+        scene.update(sm, events)
+    else:
+      if len(sm.scenes) > 1:
+        sm.scenes[-2].update(sm, events)
+
+class FadeTransitionScene(TransitionScene):
+  def draw(self, sm, screen):
+    if self.currentPercentage < 50:
+      for s in self.fromScenes:
+        s.draw(sm, screen)
+    else:
+      if len(self.toScenes) == 0:
+        if len(sm.scenes) > 1:
+          sm.scenes[-2].draw(sm, screen)
+      else:
+        for s in self.toScenes:
+          s.draw(sm, screen)
+
+    # fade overlay
+    overlay = pygame.Surface((830, 830))
+    alpha = int(abs((255 - ((255/50)*self.currentPercentage))))
+    overlay.set_alpha(255 - alpha)
+    overlay.fill(const.BG_COLOR)
+    screen.blit(overlay, (0, 0))

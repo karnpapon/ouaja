@@ -1,8 +1,4 @@
 import pygame
-import pygame_textinput
-import sys
-import os
-import random
 from . import const
 
 class Entity(object):
