@@ -73,10 +73,17 @@ class BaseScene:
   def draw(self, sm, screen): pass
 
 class MenuScene(BaseScene):
-  def __init__(self, textinput: pygame_textinput.TextInputVisualizer):
+  def __init__(self):
     super().__init__()
-    self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
-    self.textinput = textinput
+
+    font_input_intro = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
+    text_input = pygame_textinput.TextInputVisualizer(font_object=font_input_intro)
+    text_input.font_color = const.TEXT_COLOR
+    text_input.cursor_width = 12
+    text_input.cursor_color = const.TEXT_COLOR
+
+    self.font = font_input_intro
+    self.textinput = text_input
     pygame.key.set_repeat(400, 25)
 
   def on_enter(self): pass
@@ -101,7 +108,7 @@ class MenuScene(BaseScene):
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
             if self.textinput.value.lower() == const.OPENING_SENTENCE.lower():
-              sm.push(FadeTransitionScene([self], [GameScene(self.textinput)]))
+              sm.push(FadeTransitionScene([self], [GameScene()]))
 
   def update(self, sm, events): pass
 
@@ -112,7 +119,7 @@ class MenuScene(BaseScene):
     ) // 2 - (title.get_width() // 2)), (screen.get_height() // 2)))
 
 class GameScene(BaseScene):
-  def __init__(self, textinput: pygame_textinput.TextInputVisualizer):
+  def __init__(self):
     super().__init__()
     # Load soul animation frames dynamically
     soul_frame_paths = [
@@ -150,15 +157,19 @@ class GameScene(BaseScene):
                     const.RED, spriteAnim, soul_frames[0])
     camera = Camera()
 
+    font_input = pygame.font.Font("assets/fonts/NicerNightie.ttf", 42)
+    text_input = pygame_textinput.TextInputVisualizer(font_object=font_input)
+    text_input.font_color = const.TEXT_COLOR
+    text_input.cursor_width = 12
+    text_input.cursor_color = const.TEXT_COLOR
+
     self.player_pos = [100, 100]
     self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
     self.small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
     self.camera = camera
     self.fx_swirl = fx_swirl
-    self.textinput = textinput
-    self.textinput.value = ""
+    self.textinput = text_input
     self.entity = entity
-
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -440,8 +451,7 @@ class GameScene(BaseScene):
         "/synth_coord", [self.entity.position.x / const.WIDTH, 1.0 - self.entity.position.y / const.HEIGHT])
 
     self.panel_input_msg_box_rect.width = screen.get_width() / 2
-    self.panel_input_msg_box_rect.x = (
-        screen.get_width() / 2 - ouija_pos[0]) - 90
+    self.panel_input_msg_box_rect.x = ((screen.get_width() / 2) - ouija_pos[0]) - 90
     self.panel_input_msg_box_rect.y = screen.get_height() - ouija_pos[1]
 
     buffer.blit(self.textinput.surface, (self.panel_input_msg_box_rect.x +
