@@ -371,10 +371,44 @@ s.waitForBoot{
 			mod3sig = mod3sig * ((idx3a + idx3scaler) * mod3env);
 			carsig = SinOsc.ar(freq + lfo + mod1sig + mod2sig + mod3sig);
 			Out.ar(0, Pan2.ar(carsig * ampenv * amp, pan));
-		}).send
+		}).send;
+
+		SynthDef("saybufGrn", { |out, amp = 0.1, pan, pos,
+			buf, endPause = 0.2, rate = 1,
+			tilt = 0, speed = 1, grDur = 0.1|
+
+			var dur2 = BufDur.ir(buf) - endPause / speed;
+			var ratesig = Line.kr(rate - tilt, rate + tilt, dur2 * rate);
+			var snd, posSig;
+
+			var startpos = (ratesig.sign * pos * BufSampleRate.ir(buf))
+			// add tiny offset so neg rate does not reach doneAction immediately
+			+ (rate.sign * 0.01)
+			// ... and wrap to legal range
+			.wrap(0, BufFrames.ir(buf) - 1);
+
+			posSig = Line.kr(startpos / dur2, 1 + pos - 0.1,  dur2, doneAction: 2);
+
+			snd = GrainBuf.ar(1,
+				Impulse.ar(2 / grDur),
+				grDur,
+				buf,
+				ratesig,
+				posSig,
+				4
+			);
+
+			Out.ar(out,
+				Pan2.ar(snd, pan, amp)
+			)
+		}).add;
 
 
 	);
+
+	b = BufFiles.new(s, "/Users/karnpaponboonput/Desktop/unorganised-music-master/sounds", actionWhenDone: {
+		defer{ b.gui }
+	});
 
 	OSCdef(\paramsChanged,{
 		arg msg;
@@ -392,6 +426,21 @@ s.waitForBoot{
 		};
 	}, '/synth_coord');
 
+	/*OSCdef(\shot, {
+	arg msg;
+	var str = msg[2].asString;
+	// var alphabet = if(str.matchRegexp("^[a-zA-Z]$")) { str } { "c" };
+	var sbp = SayBuf.prepare((type: \say, text: str.toLower,wordrate: 1,voice: "Xander"));
+	var sbb = sbp.buf;
+
+	Synth("saybufGrn", [
+	\buf: sbb,
+	\rate: 0.95,
+	\speed: 0.25,
+	\amp: 0.67,
+	\grDur: 0.04,
+	]);
+	}, '/synth_shot');*/
 	OSCdef(\shot, {
 		arg msg;
 		var freqs = [50,55.5,64.5,84.2,93.4,124.6, 281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835];
@@ -413,5 +462,10 @@ s.waitForBoot{
 			\amp, 0.3
 		]);
 	}, '/synth_shot');
+
+	OSCdef(\shot_nodes, {
+		arg msg;
+		b.playRandom;
+	}, '/synth_shot_nodes');
 };
 )

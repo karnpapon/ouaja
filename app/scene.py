@@ -245,7 +245,7 @@ class GameScene(BaseScene):
             else:
               # question = const.USER + question.lower() + '\n'
               # question = textinput.value.lower() + '\n'
-              _answer = "You you you???????"
+              _answer = "im here now???????"
               # answer = model.ask(question)
               # mockup_ans = random.choice(
               #     ["I am a ghost, so I don't have a gender."])
@@ -350,7 +350,7 @@ class GameScene(BaseScene):
         self.fx_swirl.play()
         # self.all_sprites.add(fx_sprite)
 
-        arg.client.send_message("/synth_shot", [const.MOVE_MODE])
+        arg.client.send_message("/synth_shot", [const.MOVE_MODE, self.answer[self.answer_index]])
         self.glow_frame_counter = const.GLOW_DURATION_FRAMES
         self.answer_index += 1
 
@@ -426,7 +426,7 @@ class GameScene(BaseScene):
     utils.draw_text(
         buffer,
         self.current_answer,
-        const.RED,
+        const.WHITE,
         [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
         pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
     )
@@ -504,7 +504,7 @@ class GameScene(BaseScene):
               # data["activated"] = True
               self.activation_order.append(node_id.upper())
               # activation_index += 1
-              arg.client.send_message("/synth_shot", [])
+              arg.client.send_message("/synth_shot_nodes", [])
               break
       self.signals = new_signals
 
@@ -516,7 +516,7 @@ class TransitionScene(BaseScene):
     self.toScenes = toScenes
 
   def update(self, sm, events):
-    self.currentPercentage += 2
+    self.currentPercentage += 0.5
     if self.currentPercentage >= 100:
       sm.pop()
       for s in self.toScenes:
