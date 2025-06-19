@@ -156,7 +156,9 @@ class GameScene(BaseScene):
     self.camera = camera
     self.fx_swirl = fx_swirl
     self.textinput = textinput
+    self.textinput.value = ""
     self.entity = entity
+
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -520,7 +522,7 @@ class TransitionScene(BaseScene):
         sm.scenes[-2].update(sm, events)
 
 class FadeTransitionScene(TransitionScene):
-  def draw(self, sm, screen):
+  def draw(self, sm, screen: pygame.Surface):
     if self.currentPercentage < 50:
       for s in self.fromScenes:
         s.draw(sm, screen)
@@ -533,7 +535,7 @@ class FadeTransitionScene(TransitionScene):
           s.draw(sm, screen)
 
     # fade overlay
-    overlay = pygame.Surface((830, 830))
+    overlay = pygame.Surface((screen.get_size()[0], screen.get_size()[1]))
     alpha = int(abs((255 - ((255/50)*self.currentPercentage))))
     overlay.set_alpha(255 - alpha)
     overlay.fill(const.BG_COLOR)
