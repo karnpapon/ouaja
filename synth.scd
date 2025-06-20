@@ -32,6 +32,39 @@ s.waitForBoot{
 		validation:0
 	);
 
+	(
+		s.newBusAllocators;
+		~srcMixerChannel = MixerChannel(\channel_1, s, 2, 2, 1);
+		~src2MixerChannel = MixerChannel(\channel_2, s, 2, 2, 1);
+		~reverbMixerChannel = MixerChannel(\channel_fx_rvb, s, 2, 2, level: 1,
+			completionFunc: { |chan|
+				~rvb = chan.playfx { |outbus, revtime=0.8|
+					var sig = In.ar(outbus, 2);
+					var freez = TRand.kr(-1, 1, Dust.kr(0.7));
+					// var revtime = 0.8;
+					var drywet = 1;
+					var damping = 0.3;
+					MiVerb.ar(sig, revtime, drywet, damping, freeze: freez)
+				}
+			}
+		); // reverb is being add here
+
+		~delayMixerChannel = MixerChannel(\channel_fx_delay, s, 2, 2, level: 1,
+			completionFunc: { |chan|
+				~del = chan.playfx {|outbus,maxdelaytime=0.25,decaytime=4|
+					Mix.arFill(4, { CombL.ar(In.ar(outbus, 1), maxdelaytime, LFNoise1.kr(Rand(0, 0.1), 0.1, 0.2), decaytime) })
+				};
+			}
+		); // delay is being add here
+	);
+
+	(
+		~reverbMixerChannel.fadergroup.moveToTail(s.defaultGroup);
+		~delayMixerChannel.fadergroup.moveToTail(s.defaultGroup);
+	);
+
+	~board = MixingBoard("x", nil,~srcMixerChannel, ~src2MixerChannel, ~reverbMixerChannel, ~delayMixerChannel );
+
 	win = Window("GhostSynth", Rect(0, 0, 960-220, 212)).front;
 	multislider = MultiSliderView(win,Rect(10, 10, 400-100, (720*0.45)-130))
 	.elasticMode_(1)
@@ -126,16 +159,18 @@ s.waitForBoot{
 	.action_{
 		arg but;
 		if (but.value == 1, {
-			~synth = Synth(basename ++ 'main_synth');
+			~synth = Synth(basename ++ 'main_synth', [\out, ~src2MixerChannel.asBus], target: ~src2MixerChannel.asTarget);
 			if ( mlp_cached_path != "", { mlp.read(mlp_cached_path); },{});
 		}, { ~synth.free; });
 	};
 
 	s.sync;
 
+
+
 	(
 		SynthDef.new(basename ++ 'main_synth', {
-			arg predicting = 0, mod_base1=1, mod_base2=1, mod_base3=1;
+			arg predicting = 0, mod_base1=1, mod_base2=1, mod_base3=1, out;
 			var osc1, osc2, feed1, feed2, base1=69, base2=69, base3 = 130, loud1, loud2;
 			var val, xy, trig;
 
@@ -156,7 +191,7 @@ s.waitForBoot{
 			osc2 = SinOsc.ar((((feed2 * val[5]) +  val[6]) * base2 * mod_base2).midicps,mul: (val[7] * 50).dbamp).atan;
 			osc2 = MoogFF.ar(osc2,(base3-(val[8]*(loud1.clip(-120,0)+120))).lag(128/44100).midicps,val[9]*3.5);
 
-			Out.ar(0,LeakDC.ar([osc1,osc2],mul:0.1));
+			Out.ar(out,LeakDC.ar([osc1,osc2],mul:0.3));
 			LocalOut.ar([osc1,osc2]);
 		}).add;
 
@@ -318,7 +353,7 @@ s.waitForBoot{
 		}).add;
 
 		SynthDef("fm-gong", {
-			arg freq = 300, dr = 5.0, amp = 1.0, pan = 0;
+			arg freq = 300, dr = 5.0, amp = 1.0, pan = 0, out;
 			var mod1sig, mod1f = freq * 1.16;
 			var mod2sig, mod2f = freq * 3.14;
 			var mod3sig, mod3f = freq * 1.005;
@@ -370,7 +405,7 @@ s.waitForBoot{
 			// envelope the signal, afterwards
 			mod3sig = mod3sig * ((idx3a + idx3scaler) * mod3env);
 			carsig = SinOsc.ar(freq + lfo + mod1sig + mod2sig + mod3sig);
-			Out.ar(0, Pan2.ar(carsig * ampenv * amp, pan));
+			Out.ar(out, Pan2.ar(carsig * ampenv * amp, pan));
 		}).send;
 
 		SynthDef("saybufGrn", { |out, amp = 0.1, pan, pos,
@@ -406,9 +441,9 @@ s.waitForBoot{
 
 	);
 
-	b = BufFiles.new(s, "/Users/karnpaponboonput/Desktop/unorganised-music-master/sounds", actionWhenDone: {
-		defer{ b.gui }
-	});
+	/*	b = BufFiles.new(s, "/Users/karnpaponboonput/Desktop/unorganised-music-master/sounds", actionWhenDone: {
+	defer{ b.gui }
+	});*/
 
 	OSCdef(\paramsChanged,{
 		arg msg;
@@ -459,8 +494,9 @@ s.waitForBoot{
 			\freq, chosen,
 			\dr, dr,
 			\pan, rrand(-1.0, 1.0),
-			\amp, 0.3
-		]);
+			\amp, 0.3,
+			\out, ~srcMixerChannel.asBus
+		], target: ~srcMixerChannel.asTarget);
 	}, '/synth_shot');
 
 	OSCdef(\shot_opening, {
@@ -469,8 +505,9 @@ s.waitForBoot{
 			\freq, 204.2,
 			\dr, 8,
 			\pan, 0,
-			\amp, 0.5
-		]);
+			\amp, 0.5,
+			\out, ~srcMixerChannel.asBus
+		], target: ~srcMixerChannel.asTarget);
 	}, '/synth_shot_opening');
 
 	OSCdef(\shot_nodes, {
@@ -496,8 +533,8 @@ s.waitForBoot{
 	}, '/synth_shot_nodes');
 
 	/*OSCdef(\shot_nodes, {
-		arg msg;
-		b.playRandom;
+	arg msg;
+	b.playRandom;
 	}, '/synth_shot_nodes');*/
 };
 )
