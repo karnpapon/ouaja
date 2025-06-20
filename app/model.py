@@ -7,11 +7,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains.conversation.base import ConversationChain
 from langchain.memory import ConversationSummaryBufferMemory
 
-
 OPENAI_API = os.getenv("OPENAI_API")
-
-print(">>>>>>>>>>>>>>> OPENAI_API >>>>>>>>>>>>")
-print(OPENAI_API)
 
 llm = ChatOpenAI(
     model_name="gpt-3.5-turbo",
