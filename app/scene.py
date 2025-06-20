@@ -63,6 +63,23 @@ class SceneManager:
 
 class BaseScene:
   def __init__(self):
+    # Load soul animation frames dynamically
+    soul_frame_paths = [
+        f"assets/sprites/soul/soul_{i}.png" for i in range(1, 9)
+    ]
+    soul_frames = [pygame.image.load(path).convert_alpha()
+                   for path in soul_frame_paths]
+
+    player_sprites = pyganim.PygAnimation(
+        [(frame, 0.1) for frame in soul_frames])
+    player_sprites.scale((soul_frames[0].get_width() * 5,
+                          soul_frames[0].get_height() * 5))
+    player_sprites.play()
+
+    entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y,
+                    const.RED, player_sprites, soul_frames[0])
+
+    self.entity = entity
     self.setup_done = False
 
   def on_enter(self): pass
@@ -77,11 +94,14 @@ class MenuScene(BaseScene):
     super().__init__()
 
     font_input_intro = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
-    text_input = pygame_textinput.TextInputVisualizer(font_object=font_input_intro)
+    text_input = pygame_textinput.TextInputVisualizer(
+        font_object=font_input_intro)
     text_input.font_color = const.TEXT_COLOR
     text_input.cursor_width = 12
     text_input.cursor_color = const.TEXT_COLOR
 
+    self.delay_counter = 0
+    self.request_accepted = False
     self.font = font_input_intro
     self.textinput = text_input
     pygame.key.set_repeat(400, 25)
@@ -108,31 +128,30 @@ class MenuScene(BaseScene):
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
             if self.textinput.value.lower() == const.OPENING_SENTENCE.lower():
-              sm.push(FadeTransitionScene([self], [GameScene()]))
+              self.request_accepted = True
+              arg.client.send_message("/synth_shot_opening", [])
 
   def update(self, sm, events): pass
 
   def draw(self, sm, screen: pygame.Surface):
     screen.fill((0, 0, 0))
     title = self.font.render(const.OPENING_SENTENCE, True, (255, 0, 0))
+    if (self.delay_counter == 100):
+      sm.push(FadeTransitionScene([self], [GameScene()]))
+
+    if (self.request_accepted):
+      self.delay_counter += 1
+      self.entity.spawn(screen, (
+          (screen.get_width() / 2) -
+          (self.entity.soul_frames.get_width() / 2) - 60,
+          (screen.get_height() / 2) - (self.entity.soul_frames.get_height() / 2) - 80)
+      )
     screen.blit(self.textinput.surface, ((screen.get_width(
     ) // 2 - (title.get_width() // 2)), (screen.get_height() // 2)))
 
 class GameScene(BaseScene):
   def __init__(self):
     super().__init__()
-    # Load soul animation frames dynamically
-    soul_frame_paths = [
-        f"assets/sprites/soul/soul_{i}.png" for i in range(1, 9)
-    ]
-    soul_frames = [pygame.image.load(path).convert_alpha()
-                   for path in soul_frame_paths]
-
-    spriteAnim = pyganim.PygAnimation([(frame, 0.1) for frame in soul_frames])
-    spriteAnim.scale((soul_frames[0].get_width() * 5,
-                      soul_frames[0].get_height() * 5))
-    spriteAnim.play()
-
     # Load swirl effect frames dynamically and apply color replacement
     swirl_fx_frame_paths = [
         f"assets/sprites/swirl/frame_{i:02d}.png" for i in range(17)
@@ -153,8 +172,6 @@ class GameScene(BaseScene):
     fx_swirl.scale((swirl_fx_frames[0].get_width(),
                     swirl_fx_frames[0].get_height()))
 
-    entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y,
-                    const.RED, spriteAnim, soul_frames[0])
     camera = Camera()
 
     font_input = pygame.font.Font("assets/fonts/NicerNightie.ttf", 42)
@@ -169,7 +186,10 @@ class GameScene(BaseScene):
     self.camera = camera
     self.fx_swirl = fx_swirl
     self.textinput = text_input
-    self.entity = entity
+    self.haunted_last_call_time = 0
+    self.haunted_interval = 200  # ms
+    self.haunted_rand_lower_bound = 50
+    self.haunted_rand_upper_bound = 1000
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -207,7 +227,25 @@ class GameScene(BaseScene):
                   const.MOVE_MODE = utils.clamp(1, int(cmd[1]), 2)
                 except IndexError:
                   print("MOVE_MODE accept 1 or 2")
+              elif cmd[0] == ";;set_trigger_mode":
+                try:
+                  const.TRIGGER_MODE = utils.clamp(0, int(cmd[1]), 1)
+                except IndexError:
+                  print("TRIGGER_MODE accept 0 or 1")
+              elif cmd[0] == ";;set_haunted_mode":
+                const.HAUNTED_MODE = utils.clamp(0, int(cmd[1]), 1)
+                self.answer = " "
+              elif cmd[0] == ";;set_haunted_mode_lower_bound":
+                self.haunted_rand_lower_bound = utils.clamp(
+                    20, int(cmd[1]), 49)
+                self.answer = " "
+              elif cmd[0] == ";;set_haunted_mode_upper_bound":
+                self.haunted_rand_upper_bound = utils.clamp(
+                    50, int(cmd[1]), 1000)
+                self.answer = " "
               elif cmd[0] == ";;move_to":
+                const.HAUNTED_MODE = False
+                const.TRIGGER_MODE = False
                 move_to = ast.literal_eval(cmd[1])
                 self.to = pygame.Vector2(move_to)
                 self.answer = " "
@@ -227,6 +265,8 @@ class GameScene(BaseScene):
               elif cmd[0] == ";;stop":
                 states.abort = True
                 self.go_to_init_pos = True
+                const.HAUNTED_MODE = False
+                const.TRIGGER_MODE = True
                 const.TIMEOUT_FACTOR = 2
               elif cmd[0] == ";;bye":
                 const.TIMEOUT_FACTOR = 2
@@ -277,6 +317,7 @@ class GameScene(BaseScene):
     self.signals = []
     self.answer_index = 0
     self.all_sprites = pygame.sprite.Group()
+    self.to = pygame.Vector2(0)
 
     self.border_image = pygame.image.load(
         "assets/ui/hexany/Panels/Transparent/bone_breakers.png").convert_alpha()
@@ -350,11 +391,15 @@ class GameScene(BaseScene):
         self.fx_swirl.play()
         # self.all_sprites.add(fx_sprite)
 
-        arg.client.send_message("/synth_shot", [const.MOVE_MODE, self.answer[self.answer_index]])
+        if (const.TRIGGER_MODE and not const.HAUNTED_MODE):
+          arg.client.send_message(
+              "/synth_shot", [const.MOVE_MODE, self.answer[self.answer_index]])
         self.glow_frame_counter = const.GLOW_DURATION_FRAMES
-        self.answer_index += 1
 
-        # camera.start_shake()
+        if (not const.HAUNTED_MODE):
+          self.answer_index += 1
+
+        # self.camera.start_shake()
 
         if self.answer_index < len(self.answer):
           char = self.answer[self.answer_index].upper()
@@ -375,6 +420,17 @@ class GameScene(BaseScene):
     buffer.fill(bg_color)
     buffer.blit(self.bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
     buffer.blit(self.bg, (0+ouija_pos[0], 0+ouija_pos[1]))
+
+    if (const.HAUNTED_MODE and current_time - self.haunted_last_call_time >= self.haunted_interval):
+      self.to = pygame.math.Vector2(
+          random.uniform(0, pygame.display.get_window_size()[0]),
+          random.uniform(0, pygame.display.get_window_size()[1])
+      )
+      if (random.choice([0, 1])):
+        self.camera.start_shake()
+      self.haunted_interval = random.uniform(
+          self.haunted_rand_lower_bound, self.haunted_rand_upper_bound)
+      self.haunted_last_call_time = current_time
 
     # if glow_frame_counter > 0:
     #   glow_alpha = get_glow_alpha(glow_frame_counter)
@@ -433,7 +489,7 @@ class GameScene(BaseScene):
 
     if (self.answer):
       if (const.MOVE_MODE == 1):
-        self.entity.Move(self.to)
+        self.entity.move(self.to)
         if self.answer_index > 0:
           # self.all_sprites.update(current_time)
           # self.all_sprites.draw(buffer)
@@ -444,14 +500,15 @@ class GameScene(BaseScene):
                 self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
           ))
       elif (const.MOVE_MODE == 2):
-        self.entity.Teleport(self.to)
+        self.entity.teleport(self.to)
 
-    self.entity.Draw(buffer, ouija_pos)
+    self.entity.draw(buffer, ouija_pos)
     arg.client.send_message(
         "/synth_coord", [self.entity.position.x / const.WIDTH, 1.0 - self.entity.position.y / const.HEIGHT])
 
     self.panel_input_msg_box_rect.width = screen.get_width() / 2
-    self.panel_input_msg_box_rect.x = ((screen.get_width() / 2) - ouija_pos[0]) - 90
+    self.panel_input_msg_box_rect.x = (
+        (screen.get_width() / 2) - ouija_pos[0]) - 90
     self.panel_input_msg_box_rect.y = screen.get_height() - ouija_pos[1]
 
     buffer.blit(self.textinput.surface, (self.panel_input_msg_box_rect.x +
@@ -504,27 +561,28 @@ class GameScene(BaseScene):
               # data["activated"] = True
               self.activation_order.append(node_id.upper())
               # activation_index += 1
-              arg.client.send_message("/synth_shot_nodes", [])
+              if (const.TRIGGER_MODE):
+                arg.client.send_message("/synth_shot_nodes", [])
               break
       self.signals = new_signals
 
 class TransitionScene(BaseScene):
   def __init__(self, fromScenes, toScenes):
     super().__init__()
-    self.currentPercentage = 0
-    self.fromScenes = fromScenes
-    self.toScenes = toScenes
+    self.current_percentage = 0
+    self.from_scenes = fromScenes
+    self.to_scenes = toScenes
 
   def update(self, sm, events):
-    self.currentPercentage += 0.5
-    if self.currentPercentage >= 100:
+    self.current_percentage += 1.25
+    if self.current_percentage >= 100:
       sm.pop()
-      for s in self.toScenes:
+      for s in self.to_scenes:
         sm.push(s)
-    for scene in self.fromScenes:
+    for scene in self.from_scenes:
       scene.update(sm, events)
-    if len(self.toScenes) > 0:
-      for scene in self.toScenes:
+    if len(self.to_scenes) > 0:
+      for scene in self.to_scenes:
         scene.setup()
         scene.update(sm, events)
     else:
@@ -533,20 +591,20 @@ class TransitionScene(BaseScene):
 
 class FadeTransitionScene(TransitionScene):
   def draw(self, sm, screen: pygame.Surface):
-    if self.currentPercentage < 50:
-      for s in self.fromScenes:
+    if self.current_percentage < 50:
+      for s in self.from_scenes:
         s.draw(sm, screen)
     else:
-      if len(self.toScenes) == 0:
+      if len(self.to_scenes) == 0:
         if len(sm.scenes) > 1:
           sm.scenes[-2].draw(sm, screen)
       else:
-        for s in self.toScenes:
+        for s in self.to_scenes:
           s.draw(sm, screen)
 
     # fade overlay
     overlay = pygame.Surface((screen.get_size()[0], screen.get_size()[1]))
-    alpha = int(abs((255 - ((255/50)*self.currentPercentage))))
+    alpha = int(abs((255 - ((255/50)*self.current_percentage))))
     overlay.set_alpha(255 - alpha)
     overlay.fill(const.BG_COLOR)
     screen.blit(overlay, (0, 0))

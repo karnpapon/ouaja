@@ -463,9 +463,41 @@ s.waitForBoot{
 		]);
 	}, '/synth_shot');
 
+	OSCdef(\shot_opening, {
+		arg msg;
+		Synth("fm-gong", [
+			\freq, 204.2,
+			\dr, 8,
+			\pan, 0,
+			\amp, 0.5
+		]);
+	}, '/synth_shot_opening');
+
 	OSCdef(\shot_nodes, {
 		arg msg;
-		b.playRandom;
+		var freqs = [50,55.5,64.5,84.2,93.4,124.6, 281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835];
+
+		var weights = freqs.collect { |val|
+			if (val < 564) { 5 } { 1 }
+		};
+
+		var totalWeight = weights.sum;
+		var normWeights = weights.collect { |w| w / totalWeight };
+
+		var chosen = freqs.wchoose(normWeights);
+		var dr = [6,8, 2, 2.5, 3,3.25, 4.25].choose;
+
+		Synth("fm-gong", [
+			\freq, chosen,
+			\dr, dr,
+			\pan, rrand(-1.0, 1.0),
+			\amp, [0.2,0.15,0.1,0.25].choose
+		]);
 	}, '/synth_shot_nodes');
+
+	/*OSCdef(\shot_nodes, {
+		arg msg;
+		b.playRandom;
+	}, '/synth_shot_nodes');*/
 };
 )

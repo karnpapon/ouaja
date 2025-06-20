@@ -8,17 +8,21 @@ class Entity(object):
     self.velocity = pygame.Vector2(const.VELOCITY, const.VELOCITY)
     self.acceleration = pygame.Vector2(0.5, 0.5)
     self.friction = 0.95
-    self.spriteAnim = spriteAnim
+    self.sprite_anim = spriteAnim
     self.soul_frames = soul_frames
+    # self.sprite_anim.set_alpha(0)
 
-  def Draw(self, buffer, ouija_pos):
-    self.spriteAnim.blit(buffer, (
+  def spawn(self, buffer, pos):
+    self.sprite_anim.blit(buffer, pos)
+
+  def draw(self, buffer, ouija_pos):
+    self.sprite_anim.blit(buffer, (
         ((self.position.x - self.soul_frames.get_width() / 2)) + ouija_pos[0],
         ((self.position.y -
          self.soul_frames.get_height() / 2) - 25 + ouija_pos[1])
     ))
 
-  def Move(self, to: pygame.Vector2):
+  def move(self, to: pygame.Vector2):
     target = to
     dir = target - self.position
 
@@ -36,7 +40,7 @@ class Entity(object):
     self.position.x += self.velocity.x
     self.position.y += self.velocity.y
 
-  def Teleport(self, to: pygame.Vector2):
+  def teleport(self, to: pygame.Vector2):
     self.position.x = to.x
     self.position.y = to.y
     return
