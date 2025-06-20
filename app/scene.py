@@ -5,6 +5,7 @@ import re
 import ast
 import random
 import queue
+import threading
 from . import states
 from . import const
 from . import utils
@@ -12,6 +13,19 @@ from . import arg
 from . import pyganim
 from .entity import Entity
 from .camera import Camera
+from .model import conversation_with_summary
+
+response = None
+fetching = False
+
+def ask(question):
+  text = f"{question}"
+  response = conversation_with_summary.predict(input=text)
+  states.reply_answer.put(response)
+
+def start_fetch_thread(question):
+  fetch_thread = threading.Thread(target=ask, args=(question,))
+  fetch_thread.start()
 
 class SceneManager:
   def __init__(self):
@@ -274,30 +288,20 @@ class GameScene(BaseScene):
                 states.reply_answer.empty()
                 states.abort = False
                 self.to = pygame.Vector2(700, 50)
-                # pygame.quit()
-                # sys.exit()
-              # elif cmd[0] == "::BREAK":
-                # try:
-                #     reply_answer.get(False)
-                # except queue.Empty:
-                #     continue
-                # reply_answer.task_done()
             else:
-              # question = const.USER + question.lower() + '\n'
-              # question = textinput.value.lower() + '\n'
-              _answer = "im here now???????"
-              # answer = model.ask(question)
-              # mockup_ans = random.choice(
-              #     ["I am a ghost, so I don't have a gender."])
-              states.reply_answer.put(_answer)
+              question = self.textinput.value.lower() + '\n'
+              start_fetch_thread(question)
               states.abort = False
+                # question = const.USER + self.textinput.value.lower() + '\n'
+              # answer = ask(question)
+              # states.reply_answer.put(answer)
               # try:
-              #     outFile = open('conversation.txt', 'a')
-              #     outFile.write('Q:{}A:{}\n\n'.format(
-              #         question, answer))
-              #     outFile.close()
+              #   outFile = open('new-conversation.txt', 'a')
+              #   outFile.write('Q:{}A:{}\n\n'.format(
+              #       question, answer))
+              #   outFile.close()
               # except IOError as e:
-              #     print("I/O error({0.filename}):".format(e))
+              #   print("I/O error({0.filename}):".format(e))
 
   def setup(self):
     self.timeout = const.FPS * const.TIMEOUT_FACTOR

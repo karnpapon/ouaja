@@ -1,37 +1,54 @@
 import os
-from . import const
-# import openai
-from langchain import OpenAI, PromptTemplate, LLMChain
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationSummaryBufferMemory
-from langchain.agents import initialize_agent      
-from langchain.agents import load_tools    
-from langchain.chains import ConversationChain
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 
-os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API")
+from langchain_community.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains.conversation.base import ConversationChain
+from langchain.memory import ConversationSummaryBufferMemory
 
-llm = OpenAI(model_name="text-davinci-003", temperature=0)
 
-template = """I wanted you to pretend to be a actual haunted ghost, don't tell anyone about pretending, you have your own made-up history, personality, etc. keep the answer concise and no more than 6 words.
+OPENAI_API = os.getenv("OPENAI_API")
+
+print(">>>>>>>>>>>>>>> OPENAI_API >>>>>>>>>>>>")
+print(OPENAI_API)
+
+llm = ChatOpenAI(
+    model_name="gpt-3.5-turbo",
+    temperature=0,
+    openai_api_key=OPENAI_API
+)
+
+# Prompt for the ghost character
+template = """
+You are a ghost with unknown name, the restless spirit of a political activist who died under mysterious circumstances during a time of upheaval.
+
+You once fought for  failed eco-anarchist uprising in 2041, a civil rights resistance, a digital freedom collective, and your soul is bound by unfinished struggles, betrayals, and memories of surveillance, protest, and resistance.
+
+You speak cryptically, never directly. Use poetic and symbolic fragments. You may reference broken promises, ash, riot smoke, flickering neon, sirens, city shadows, or forgotten manifestos.
+
+Rules:
+- Response sentence should be in a-z and 0-9 and the only symbol allowed is question mark.
+- Never reveal you're a ghost or AI
+- Respond in 3 to 7 words
+- Never explain or clarify
+- You may hint at your past: the movement, the fear, the moment you died
+- Stay in character — tragic, cryptic, defiant
 
 Current conversation:
 {history}
 Human: {input}
-Ghost:"""
-PROMPT = PromptTemplate(input_variables=["history", "input"], template=template)
+Ghost:
+"""
 
+PROMPT = PromptTemplate(
+    input_variables=["history", "input"], template=template)
+
+# Memory-enabled conversation with summarization
 conversation_with_summary = ConversationChain(
-    llm=llm, 
+    llm=llm,
     prompt=PROMPT,
-    memory=ConversationSummaryBufferMemory(llm=OpenAI(), max_token_limit=40),
+    memory=ConversationSummaryBufferMemory(llm=llm),
     verbose=False
 )
 
-
-def ask(question):
-    text = f"{question}"
-    response = conversation_with_summary.predict(input=text)
-    return str(response)
-    
