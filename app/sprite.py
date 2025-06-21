@@ -1,5 +1,5 @@
 import pygame
-from . import pyganim
+from ..external import pyganim
 
 class FXSprite(pygame.sprite.Sprite):
   def __init__(self, animation: pyganim.PygAnimation, position, total_duration):

@@ -10,7 +10,7 @@ from . import states
 from . import const
 from . import utils
 from . import arg
-from . import pyganim
+from external import pyganim
 from .entity import Entity
 from .camera import Camera
 from .model import conversation_with_summary

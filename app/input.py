@@ -1,5 +1,6 @@
 import pygame
 
+# unused for now
 class Keyboard:
   def __init__(self):
     self.currentKeyStates = None
