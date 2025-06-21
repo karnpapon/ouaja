@@ -6,6 +6,7 @@ import ast
 import random
 import queue
 import threading
+from easing_functions import CubicEaseOut
 from . import states
 from . import const
 from . import utils
@@ -18,6 +19,7 @@ from .model import conversation_with_summary
 
 response = None
 fetching = False
+
 
 # match commands with prefix (;;).
 command_prefix_pattern = r"(;;\S+)(?:\s+(?:([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)|\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*,\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)))?"
@@ -38,7 +40,6 @@ def ask(question):
   states.reply_answer.put(response)
   write_file(question, response)
 
-
 def start_fetch_thread(question):
   fetch_thread = threading.Thread(target=ask, args=(question,))
   fetch_thread.start()
@@ -47,10 +48,10 @@ class SceneManager:
   def __init__(self):
     self.scenes = []
 
-  def isEmpty(self):
+  def is_empty(self):
     return len(self.scenes) == 0
 
-  def enterScene(self):
+  def enter_scene(self):
     if len(self.scenes) > 0:
       scene = self.scenes[-1]
       if not scene.setup_done:
@@ -58,7 +59,7 @@ class SceneManager:
         scene.setup_done = True
       scene.on_enter()
 
-  def exitScene(self):
+  def exit_scene(self):
     if len(self.scenes) > 0:
       self.scenes[-1].on_exit()
 
@@ -76,14 +77,14 @@ class SceneManager:
     pygame.display.flip()
 
   def push(self, scene):
-    self.exitScene()
+    self.exit_scene()
     self.scenes.append(scene)
-    self.enterScene()
+    self.enter_scene()
 
   def pop(self):
-    self.exitScene()
+    self.exit_scene()
     self.scenes.pop()
-    self.enterScene()
+    self.enter_scene()
 
   def set(self, scenes):
     while len(self.scenes) > 0:
@@ -119,9 +120,12 @@ class BaseScene:
   def update(self, sm, events): pass
   def draw(self, sm, screen): pass
 
-class MenuScene(BaseScene):
+class IntroScene(BaseScene):
   def __init__(self):
     super().__init__()
+
+    self.evaluating = False
+    self.eval_counter = const.GLOW_DURATION_FRAMES
 
     font_input_intro = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
     text_input = pygame_textinput.TextInputVisualizer(
@@ -129,6 +133,15 @@ class MenuScene(BaseScene):
     text_input.font_color = const.TEXT_COLOR
     text_input.cursor_width = 12
     text_input.cursor_color = const.TEXT_COLOR
+
+    self.msg_box_w = pygame.display.get_window_size()[0] // 2
+    self.msg_box_h = pygame.display.get_window_size()[1] // 6
+    self.panel_input_msg_box_rect = pygame.Rect(
+        pygame.display.get_window_size()[0] / 2 - (self.msg_box_w / 2),
+        pygame.display.get_window_size()[1] - (self.msg_box_h / 2),
+        self.msg_box_w,
+        self.msg_box_h
+    )
 
     self.delay_counter = 0
     self.request_accepted = False
@@ -157,6 +170,7 @@ class MenuScene(BaseScene):
               0, 0, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
+            self.evaluating = True
             if self.textinput.value.lower() == const.OPENING_SENTENCE.lower():
               self.request_accepted = True
               arg.client.send_message("/synth_shot_opening", [])
@@ -166,16 +180,35 @@ class MenuScene(BaseScene):
   def draw(self, sm, screen: pygame.Surface):
     screen.fill((0, 0, 0))
     title = self.font.render(const.OPENING_SENTENCE, True, (255, 0, 0))
-    if (self.delay_counter == 100):
+    if (self.delay_counter == 50):
       sm.push(FadeTransitionScene([self], [GameScene()]))
 
     if (self.request_accepted):
       self.delay_counter += 1
       self.entity.spawn(screen, (
           (screen.get_width() / 2) -
-          (self.entity.soul_frames.get_width() / 2) - 60,
-          (screen.get_height() / 2) - (self.entity.soul_frames.get_height() / 2) - 80)
+          (self.entity.soul_frames.get_width() / 2) - 10,
+          (screen.get_height() / 2) - (self.entity.soul_frames.get_height() / 2) - 90)
       )
+
+    self.panel_input_msg_box_rect.width = self.textinput.surface.get_width()
+    self.panel_input_msg_box_rect.height = self.textinput.surface.get_height()
+    self.panel_input_msg_box_rect.x = (screen.get_width() // 2 - (title.get_width() // 2))
+    self.panel_input_msg_box_rect.y = screen.get_height() // 2
+
+    if self.evaluating:
+      eval_bg_color = (0, 0, 0)
+      if self.eval_counter > 0:
+        self.eval_counter -= 1
+        blend_t = self.eval_counter / const.GLOW_DURATION_FRAMES
+        eval_bg_color = utils.blend_color((180, 0, 0), (0, 0, 0), 1 - blend_t)
+      else:
+        self.evaluating = False
+        self.eval_counter = const.GLOW_DURATION_FRAMES
+        eval_bg_color = (0, 0, 0)
+      pygame.draw.rect(screen, eval_bg_color,
+                       self.panel_input_msg_box_rect, width=0)
+
     screen.blit(self.textinput.surface, ((screen.get_width(
     ) // 2 - (title.get_width() // 2)), (screen.get_height() // 2)))
 
@@ -246,6 +279,7 @@ class GameScene(BaseScene):
               0, 0, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
+            self.evaluating = True
             if val := re.match(command_prefix_pattern, self.textinput.value):
               cmd = val.group().split(' ')
               if cmd[0] == ";;set_fps":
@@ -320,6 +354,8 @@ class GameScene(BaseScene):
     self.current_answer = ""
     self.ouija_pos = None
     self.glow_frame_counter = 0
+    self.evaluating = False
+    self.eval_counter = const.GLOW_DURATION_FRAMES
     self.letters = "?ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 "
     self.bg = pygame.image.load(
         "assets/imgs/network-red-filled-layer-1-pixelated.png")
@@ -372,9 +408,10 @@ class GameScene(BaseScene):
     if not reply == None and not states.abort:
       self.answer = reply
       self.answer = self.answer.upper()
-      self.to = pygame.Vector2(
-          const.CHARACTERS[self.answer[self.answer_index]]["pos"][0],
-          const.CHARACTERS[self.answer[self.answer_index]]["pos"][1])
+      if const.CHARACTERS.get(self.answer[self.answer_index]):
+        self.to = pygame.Vector2(
+            const.CHARACTERS[self.answer[self.answer_index]]["pos"][0],
+            const.CHARACTERS[self.answer[self.answer_index]]["pos"][1])
 
     self.camera.update()
     buffer = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
@@ -449,7 +486,6 @@ class GameScene(BaseScene):
           random.uniform(0, pygame.display.get_window_size()[0]),
           random.uniform(0, pygame.display.get_window_size()[1])
       )
-     
       fx_anim = self.fx_swirl.getCopy()
       fx_sprite = FXSprite(fx_anim, (
           self.to.x + ouija_pos[0],
@@ -532,15 +568,15 @@ class GameScene(BaseScene):
       if (const.MOVE_MODE == 1):
         self.entity.move(self.to)
         # if self.answer_index > 0:
-          # # self.all_sprites.draw(buffer)
-          # _char_data = const.CHARACTERS.get(self.answer[self.answer_index - 1])
-          # if _char_data is not None:
-          #   self.fx_swirl.blit(buffer, (
-          #       ((_char_data["pos"][0] -
-          #         self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
-          #       ((_char_data["pos"][1] -
-          #         self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
-          #   ))
+        # # self.all_sprites.draw(buffer)
+        # _char_data = const.CHARACTERS.get(self.answer[self.answer_index - 1])
+        # if _char_data is not None:
+        #   self.fx_swirl.blit(buffer, (
+        #       ((_char_data["pos"][0] -
+        #         self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
+        #       ((_char_data["pos"][1] -
+        #         self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
+        #   ))
       elif (const.MOVE_MODE == 2):
         self.entity.teleport(self.to)
 
@@ -548,10 +584,23 @@ class GameScene(BaseScene):
     arg.client.send_message(
         "/synth_coord", [self.entity.position.x / const.WIDTH, 1.0 - self.entity.position.y / const.HEIGHT])
 
-    self.panel_input_msg_box_rect.width = screen.get_width() / 2
+    self.panel_input_msg_box_rect.width = self.textinput.surface.get_width()
     self.panel_input_msg_box_rect.x = (
         (screen.get_width() / 2) - ouija_pos[0]) - 90
     self.panel_input_msg_box_rect.y = screen.get_height() - ouija_pos[1]
+
+    if self.evaluating:
+      eval_bg_color = (0, 0, 0)
+      if self.eval_counter > 0:
+        self.eval_counter -= 1
+        blend_t = self.eval_counter / const.GLOW_DURATION_FRAMES
+        eval_bg_color = utils.blend_color((180, 0, 0), (0, 0, 0), 1 - blend_t)
+      else:
+        self.evaluating = False
+        self.eval_counter = const.GLOW_DURATION_FRAMES
+        eval_bg_color = (0, 0, 0)
+      pygame.draw.rect(buffer, eval_bg_color,
+                       self.panel_input_msg_box_rect, width=0)
 
     buffer.blit(self.textinput.surface, (self.panel_input_msg_box_rect.x +
                 25, self.panel_input_msg_box_rect.y + 14))
@@ -575,11 +624,16 @@ class GameScene(BaseScene):
           for target_id in const.CHARACTERS[node_id]["nodes"]:
             end_pos = const.CHARACTERS[target_id]["pos"]
             end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
+            _start = (start_pos[0] + 35 + ouija_pos[0], start_pos[1] + 24 + ouija_pos[1])
+            _end = (end_pos[0] + end_pos_offset[0] + ouija_pos[0], end_pos[1] + end_pos_offset[1] + ouija_pos[1])
+            _dur = random.uniform(50, 400)
             self.signals.append({
-                "start": (start_pos[0] + 35 + ouija_pos[0], start_pos[1] + 24 + ouija_pos[1]),
-                "end": (end_pos[0] + end_pos_offset[0] + ouija_pos[0], end_pos[1] + end_pos_offset[1] + ouija_pos[1]),
+                "start": _start,
+                "end": _end,
                 "start_time": current_time,
-                "duration": random.uniform(50, 400)
+                "duration": _dur,
+                "ease_x": CubicEaseOut(start=_start[0], end=_end[0], duration=_dur),
+                "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur)
             })
 
         self.activation_index += 1
@@ -590,8 +644,11 @@ class GameScene(BaseScene):
         progress = elapsed / sig["duration"]
 
         if progress < 1.0:
+          ease_x = sig["ease_x"].ease(elapsed)
+          ease_y = sig["ease_y"].ease(elapsed)
+
           utils.draw_line_with_signal(
-              screen, sig["start"], sig["end"], progress)
+              screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress)
           new_signals.append(sig)
         else:
           # Reached the target — light it up!
@@ -617,7 +674,7 @@ class TransitionScene(BaseScene):
     self.to_scenes = toScenes
 
   def update(self, sm, events):
-    self.current_percentage += 2
+    self.current_percentage += 1
     if self.current_percentage >= 100:
       sm.pop()
       for s in self.to_scenes:

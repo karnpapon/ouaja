@@ -1,10 +1,9 @@
 from . import const
-from easing_functions import *
 from pygame.locals import *
 import pygame
 import sys
 import os
-from .scene import SceneManager, GameScene, MenuScene 
+from .scene import SceneManager, GameScene, IntroScene 
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 # os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
@@ -16,7 +15,7 @@ def main():
   clock = pygame.time.Clock()
 
   scene_manager = SceneManager()
-  main_menu_scene = MenuScene()
+  main_menu_scene = IntroScene()
   scene_manager.push(main_menu_scene)
   
   # input_stream = InputStream()
@@ -28,7 +27,7 @@ def main():
         running = False
 
     # input_stream.processInput()
-    if scene_manager.isEmpty(): running = False
+    if scene_manager.is_empty(): running = False
     scene_manager.input(events)
     scene_manager.update(events)
     scene_manager.draw(screen)

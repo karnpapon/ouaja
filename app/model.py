@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains.conversation.base import ConversationChain
 from langchain.memory import ConversationSummaryBufferMemory
@@ -11,7 +11,7 @@ OPENAI_API = os.getenv("OPENAI_API")
 CONTEXT_CHARACTER = os.getenv("CONTEXT_CHARACTER")
 
 llm = ChatOpenAI(
-    model_name="gpt-3.5-turbo",
+    model_name="gpt-4.1-nano",
     temperature=0.7, # just only for the sake of clarity, since 0.7 is a default 
     openai_api_key=OPENAI_API
 )

@@ -24,6 +24,7 @@ NOTE: This tool is intended for live performance, So it's an audio-engine agnost
 
 ## Commands
 
+- `;;set_fps`
 - `;;set_timeout_factor`
 - `;;set_move_mode`
 - `;;set_trigger_mode`
