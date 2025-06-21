@@ -1,5 +1,5 @@
 import pygame
-from ..external import pyganim
+from external import pyganim
 
 class FXSprite(pygame.sprite.Sprite):
   def __init__(self, animation: pyganim.PygAnimation, position, total_duration):
@@ -8,7 +8,7 @@ class FXSprite(pygame.sprite.Sprite):
     self.position = position
     self.started = False
 
-    self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
+    self.image = pygame.Surface(position, pygame.SRCALPHA)
     self.rect = self.image.get_rect(center=position)
 
     self.timer = 0  # Keep track of time
@@ -17,15 +17,15 @@ class FXSprite(pygame.sprite.Sprite):
   def start(self):
     self.animation.play()
     self.started = True
-    self.image = self.animation.getCurrentFrame()
+    self.image: pygame.Surface = self.animation.getCurrentFrame()
     self.rect = self.image.get_rect(center=self.position)
 
   def update(self, dt):
     if not self.started:
       return
     
-    self.animation.blit(self.image, (0, 0)) 
-    self.image = self.animation.getCurrentFrame()
+    self.animation.blit(self.image, self.position) 
+    self.image: pygame.Surface = self.animation.getCurrentFrame()
     self.rect = self.image.get_rect(center=self.position)
 
     self.timer += dt

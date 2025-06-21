@@ -12,7 +12,7 @@ CONTEXT_CHARACTER = os.getenv("CONTEXT_CHARACTER")
 
 llm = ChatOpenAI(
     model_name="gpt-3.5-turbo",
-    temperature=0,
+    temperature=0.7, # just only for the sake of clarity, since 0.7 is a default 
     openai_api_key=OPENAI_API
 )
 
@@ -23,7 +23,7 @@ template = f"""
 Rules:
 - Response sentence should be in a-z and 0-9 and the only symbol allowed is question mark.
 - Never reveal you're a ghost or AI
-- Respond in 3 to 7 words
+- Respond in 3 to 8 words
 - Never explain or clarify
 - You may hint at your past: the movement, the fear, the moment you died
 - Stay in character — tragic, cryptic, defiant

@@ -1,11 +1,14 @@
 # ouaja
 
-ouaja (วาจา, /waː˧.t͡ɕaː˧/ pronouced as 'waa-jaa', a Thai word for "speech" ), a tool for live (ghosting) performance.
+ouaja (วาจา, /waː˧.t͡ɕaː˧/ pronouced as 'waa-jaa', a Thai word for "speech" ).
+
+
+NOTE: This tool is intended for live performance, So it's an audio-engine agnostic by design (I'm using `SuperCollider`). You'll need to supply your own preferred audio engine backend.
 
 # prerequisites
 - `OpenAI` API token
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/), a python package
-- [`SuperCollider`](https://supercollider.github.io/), audio engine
+- OPTIONAL [`SuperCollider`](https://supercollider.github.io/), audio engine
   - [`FluCoMa`](https://github.com/flucoma/flucoma-sc), additional algorithms 
   - [`ddwMixerChannel`](https://github.com/jamshark70/ddwMixerChannel), mixer channel
 

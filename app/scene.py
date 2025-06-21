@@ -13,6 +13,7 @@ from . import arg
 from external import pyganim
 from .entity import Entity
 from .camera import Camera
+from .sprite import FXSprite
 from .model import conversation_with_summary
 
 response = None
@@ -399,15 +400,19 @@ class GameScene(BaseScene):
              self.answer[self.answer_index].lower(),
              ])
 
-        # fx_anim = self.fx_swirl.getCopy()
-        # fx_sprite = FXSprite(fx_anim, (
-        #     ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][0] -
-        #         self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
-        #     ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][1] -
-        #         self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
-        # ), self.total_duration_swirl_fx_frames)
-        self.fx_swirl.play()
-        # self.all_sprites.add(fx_sprite)
+        char = self.answer[self.answer_index].upper()
+        _char_data = const.CHARACTERS.get(self.answer[self.answer_index])
+        if _char_data is not None:
+          fx_anim = self.fx_swirl.getCopy()
+          fx_sprite = FXSprite(fx_anim, (
+              ((_char_data["pos"][0] -
+                  self.fx_swirl.getFrame(0).get_width() / 2) + 95) + ouija_pos[0],
+              ((_char_data["pos"][1] -
+                  self.fx_swirl.getFrame(0).get_height() / 2) + 78) + ouija_pos[1]
+          ), const.GLOW_DURATION_FRAMES * len(self.fx_swirl._images))
+          self.all_sprites.add(fx_sprite)
+          fx_sprite.start()
+        # self.fx_swirl.play()
 
         if (const.TRIGGER_MODE and not const.HAUNTED_MODE):
           arg.client.send_message(
@@ -444,8 +449,17 @@ class GameScene(BaseScene):
           random.uniform(0, pygame.display.get_window_size()[0]),
           random.uniform(0, pygame.display.get_window_size()[1])
       )
-      if (random.choice([0, 1])):
-        self.camera.start_shake()
+     
+      fx_anim = self.fx_swirl.getCopy()
+      fx_sprite = FXSprite(fx_anim, (
+          self.to.x + ouija_pos[0],
+          self.to.y + ouija_pos[1]
+      ), const.GLOW_DURATION_FRAMES * len(self.fx_swirl._images))
+      self.all_sprites.add(fx_sprite)
+      fx_sprite.start()
+
+      # if (random.choice([0, 1])):
+      self.camera.start_shake()
       self.haunted_interval = random.uniform(
           self.haunted_rand_lower_bound, self.haunted_rand_upper_bound)
       self.haunted_last_call_time = current_time
@@ -499,10 +513,9 @@ class GameScene(BaseScene):
 
     _text_rect = ghost_msg.get_rect()
     _text_rect.centerx = screen.get_width() // 2
-    _text_rect.centery = 138+ouija_pos[1]
+    _text_rect.centery = 148+ouija_pos[1]
 
     buffer.blit(ghost_msg, _text_rect)
-
     # utils.draw_text(
     #     buffer,
     #     self.current_answer,
@@ -511,20 +524,23 @@ class GameScene(BaseScene):
     #     pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
     # )
 
+    if (self.glow_frame_counter > 0):
+      self.all_sprites.update(self.glow_frame_counter)
+      self.all_sprites.draw(buffer)
+
     if (self.answer):
       if (const.MOVE_MODE == 1):
         self.entity.move(self.to)
-        if self.answer_index > 0:
-          # self.all_sprites.update(current_time)
-          # self.all_sprites.draw(buffer)
-          _char_data = const.CHARACTERS.get(self.answer[self.answer_index - 1])
-          if _char_data is not None:
-            self.fx_swirl.blit(buffer, (
-                ((_char_data["pos"][0] -
-                  self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
-                ((_char_data["pos"][1] -
-                  self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
-            ))
+        # if self.answer_index > 0:
+          # # self.all_sprites.draw(buffer)
+          # _char_data = const.CHARACTERS.get(self.answer[self.answer_index - 1])
+          # if _char_data is not None:
+          #   self.fx_swirl.blit(buffer, (
+          #       ((_char_data["pos"][0] -
+          #         self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
+          #       ((_char_data["pos"][1] -
+          #         self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
+          #   ))
       elif (const.MOVE_MODE == 2):
         self.entity.teleport(self.to)
 
@@ -553,17 +569,18 @@ class GameScene(BaseScene):
       if self.activation_index < len(self.activation_order):
         node_id = self.activation_order[self.activation_index]
         # nodes[node_id]["activated"] = True
-        start_pos = const.CHARACTERS[node_id]["pos"]
+        if const.CHARACTERS.get(node_id):
+          start_pos = const.CHARACTERS[node_id]["pos"]
 
-        for target_id in const.CHARACTERS[node_id]["nodes"]:
-          end_pos = const.CHARACTERS[target_id]["pos"]
-          end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
-          self.signals.append({
-              "start": (start_pos[0] + 35 + ouija_pos[0], start_pos[1] + 24 + ouija_pos[1]),
-              "end": (end_pos[0] + end_pos_offset[0] + ouija_pos[0], end_pos[1] + end_pos_offset[1] + ouija_pos[1]),
-              "start_time": current_time,
-              "duration": 400
-          })
+          for target_id in const.CHARACTERS[node_id]["nodes"]:
+            end_pos = const.CHARACTERS[target_id]["pos"]
+            end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
+            self.signals.append({
+                "start": (start_pos[0] + 35 + ouija_pos[0], start_pos[1] + 24 + ouija_pos[1]),
+                "end": (end_pos[0] + end_pos_offset[0] + ouija_pos[0], end_pos[1] + end_pos_offset[1] + ouija_pos[1]),
+                "start_time": current_time,
+                "duration": random.uniform(50, 400)
+            })
 
         self.activation_index += 1
 
