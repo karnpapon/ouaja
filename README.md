@@ -13,6 +13,7 @@ ouaja (วาจา, /waː˧.t͡ɕaː˧/ pronouced as 'waa-jaa', a Thai word for
 
 - `cp .env.example .env`, to create `.env` from example
 - put your token in `.env`
+- put details or the `CONTEXT_CHARACTER` in `.env`
 - `uv sync`
 - `source .venv/bin/activate`
 - `python main.py` default port is `57120`, if you wanted to configure the ip/port use eg. `python main.py --ip 127.0.0.1 --port 8080`

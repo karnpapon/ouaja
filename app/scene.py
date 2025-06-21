@@ -18,10 +18,25 @@ from .model import conversation_with_summary
 response = None
 fetching = False
 
+# match commands with prefix (;;).
+command_prefix_pattern = r"(;;\S+)(?:\s+(?:([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)|\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*,\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)))?"
+command_prefix_pattern_cursor = r"(;\S+)(?:\s+(?:([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)|\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*,\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)))?"
+
+def write_file(_question, _response):
+  try:
+    outFile = open('conversation.txt', 'a')
+    outFile.write('Q:{}A:{}\n\n'.format(
+        _question, _response))
+    outFile.close()
+  except IOError as e:
+    print("I/O error({0.filename}):".format(e))
+
 def ask(question):
   text = f"{question}"
-  response = conversation_with_summary.predict(input=text)
+  response = conversation_with_summary.predict(input=text)  # "i'm here now"
   states.reply_answer.put(response)
+  write_file(question, response)
+
 
 def start_fetch_thread(question):
   fetch_thread = threading.Thread(target=ask, args=(question,))
@@ -188,7 +203,7 @@ class GameScene(BaseScene):
 
     camera = Camera()
 
-    font_input = pygame.font.Font("assets/fonts/NicerNightie.ttf", 42)
+    font_input = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
     text_input = pygame_textinput.TextInputVisualizer(font_object=font_input)
     text_input.font_color = const.TEXT_COLOR
     text_input.cursor_width = 12
@@ -210,6 +225,11 @@ class GameScene(BaseScene):
 
   def handle_events(self, sm, events):
     self.textinput.update(events)
+    if re.match(command_prefix_pattern_cursor, self.textinput.value):
+      self.textinput.cursor_color = const.WHITE
+    else:
+      self.textinput.cursor_color = const.RED
+
     for event in events:
       if event.type == pygame.QUIT:
         pygame.quit()
@@ -225,8 +245,7 @@ class GameScene(BaseScene):
               0, 0, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
         elif event.key == pygame.K_RETURN:
           if self.textinput.value != "":
-            # match commands with prefix (::).
-            if val := re.match(r"(;;\S+)(?:\s+(?:([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)|\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*,\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)))?", self.textinput.value):
+            if val := re.match(command_prefix_pattern, self.textinput.value):
               cmd = val.group().split(' ')
               if cmd[0] == ";;set_fps":
                 try:
@@ -292,16 +311,6 @@ class GameScene(BaseScene):
               question = self.textinput.value.lower() + '\n'
               start_fetch_thread(question)
               states.abort = False
-                # question = const.USER + self.textinput.value.lower() + '\n'
-              # answer = ask(question)
-              # states.reply_answer.put(answer)
-              # try:
-              #   outFile = open('new-conversation.txt', 'a')
-              #   outFile.write('Q:{}A:{}\n\n'.format(
-              #       question, answer))
-              #   outFile.close()
-              # except IOError as e:
-              #   print("I/O error({0.filename}):".format(e))
 
   def setup(self):
     self.timeout = const.FPS * const.TIMEOUT_FACTOR
@@ -383,7 +392,12 @@ class GameScene(BaseScene):
         if const.ACTIVATE_NODES:
           self.activation_order.append(self.answer[self.answer_index].upper())
         self.current_answer += random.choice(
-            [self.answer[self.answer_index].upper(), self.answer[self.answer_index].lower()])
+            [self.answer[self.answer_index].upper(),
+             self.answer[self.answer_index].lower(),
+             self.answer[self.answer_index].lower(),
+             self.answer[self.answer_index].lower(),
+             self.answer[self.answer_index].lower(),
+             ])
 
         # fx_anim = self.fx_swirl.getCopy()
         # fx_sprite = FXSprite(fx_anim, (
@@ -459,8 +473,8 @@ class GameScene(BaseScene):
       # self.current_answer = ""
       self.timeout = const.FPS * const.TIMEOUT_FACTOR
 
-    ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 50)
-    ghost_msg = ghost_msg.render(str(self.current_answer), True, const.WHITE)
+    ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
+    ghost_msg = ghost_msg.render(str(self.current_answer), True, const.RED)
 
     # Draw "YES" and "NO"
     yes_text = self.font.render("Yes", True, const.TEXT_COLOR)
@@ -483,13 +497,19 @@ class GameScene(BaseScene):
              const.CHARACTERS[letter]["pos"][1] + ouija_pos[1]]
       buffer.blit(text, pos)
 
-    utils.draw_text(
-        buffer,
-        self.current_answer,
-        const.WHITE,
-        [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
-        pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
-    )
+    _text_rect = ghost_msg.get_rect()
+    _text_rect.centerx = screen.get_width() // 2
+    _text_rect.centery = 138+ouija_pos[1]
+
+    buffer.blit(ghost_msg, _text_rect)
+
+    # utils.draw_text(
+    #     buffer,
+    #     self.current_answer,
+    #     const.WHITE,
+    #     [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
+    #     pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
+    # )
 
     if (self.answer):
       if (const.MOVE_MODE == 1):
@@ -497,12 +517,14 @@ class GameScene(BaseScene):
         if self.answer_index > 0:
           # self.all_sprites.update(current_time)
           # self.all_sprites.draw(buffer)
-          self.fx_swirl.blit(buffer, (
-              ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][0] -
-                self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
-              ((const.CHARACTERS[self.answer[self.answer_index - 1]]["pos"][1] -
-                self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
-          ))
+          _char_data = const.CHARACTERS.get(self.answer[self.answer_index - 1])
+          if _char_data is not None:
+            self.fx_swirl.blit(buffer, (
+                ((_char_data["pos"][0] -
+                  self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
+                ((_char_data["pos"][1] -
+                  self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
+            ))
       elif (const.MOVE_MODE == 2):
         self.entity.teleport(self.to)
 
@@ -578,7 +600,7 @@ class TransitionScene(BaseScene):
     self.to_scenes = toScenes
 
   def update(self, sm, events):
-    self.current_percentage += 1.25
+    self.current_percentage += 2
     if self.current_percentage >= 100:
       sm.pop()
       for s in self.to_scenes:

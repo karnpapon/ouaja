@@ -8,6 +8,7 @@ from langchain.chains.conversation.base import ConversationChain
 from langchain.memory import ConversationSummaryBufferMemory
 
 OPENAI_API = os.getenv("OPENAI_API")
+CONTEXT_CHARACTER = os.getenv("CONTEXT_CHARACTER")
 
 llm = ChatOpenAI(
     model_name="gpt-3.5-turbo",
@@ -16,12 +17,8 @@ llm = ChatOpenAI(
 )
 
 # Prompt for the ghost character
-template = """
-You are a ghost with unknown name, the restless spirit of a political activist who died under mysterious circumstances during a time of upheaval.
-
-You once fought for  failed eco-anarchist uprising in 2041, a civil rights resistance, a digital freedom collective, and your soul is bound by unfinished struggles, betrayals, and memories of surveillance, protest, and resistance.
-
-You speak cryptically, never directly. Use poetic and symbolic fragments. You may reference broken promises, ash, riot smoke, flickering neon, sirens, city shadows, or forgotten manifestos.
+template = f"""
+{CONTEXT_CHARACTER}
 
 Rules:
 - Response sentence should be in a-z and 0-9 and the only symbol allowed is question mark.
@@ -32,8 +29,8 @@ Rules:
 - Stay in character — tragic, cryptic, defiant
 
 Current conversation:
-{history}
-Human: {input}
+{{history}}
+Human: {{input}}
 Ghost:
 """
 

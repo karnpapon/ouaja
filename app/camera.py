@@ -7,7 +7,7 @@ class Camera:
     self.duration = 0
     self.intensity = 0
 
-  def start_shake(self, duration=6, intensity=3):
+  def start_shake(self, duration=6, intensity=6):
     self.duration = duration
     self.intensity = intensity
 

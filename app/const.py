@@ -8,7 +8,7 @@ STAGE_SCREEN = "menu"
 
 OPENING_SENTENCE = "Signal the trace. We are listening..."
 
-INIT_POINT_X = 482 - 53
+INIT_POINT_X = 482 - 30
 INIT_POINT_Y = 50
 MAX_SPEED = 20
 TIMEOUT_FACTOR = 2
