@@ -2,45 +2,45 @@ import pygame
 import numpy as np
 
 def clamp(minimum, x, maximum):
-    return max(minimum, min(x, maximum))
+  return max(minimum, min(x, maximum))
 
 def replace_color(surface, old_color, new_color, tolerance=0):
-    """
-    Replace all pixels of a given color in a Pygame surface with a new color.
-    
-    Args:
-        surface (pygame.Surface): The surface to process (must have per-pixel alpha).
-        old_color (tuple): The RGB color to replace, e.g., (255, 0, 0).
-        new_color (tuple): The RGB color to use as replacement, e.g., (255, 255, 255).
-        tolerance (int): Optional tolerance for matching the old_color. Default is 0 (exact match).
-    
-    Returns:
-        pygame.Surface: A new surface with the color replaced.
-    """
-    # Ensure the surface has per-pixel alpha
-    surface = surface.convert_alpha()
-    
-    # Copy to avoid modifying the original surface
-    new_surface = surface.copy()
+  """
+  Replace all pixels of a given color in a Pygame surface with a new color.
 
-    # Get pixel arrays
-    rgb_array = pygame.surfarray.pixels3d(new_surface)
-    alpha_array = pygame.surfarray.pixels_alpha(new_surface)
+  Args:
+      surface (pygame.Surface): The surface to process (must have per-pixel alpha).
+      old_color (tuple): The RGB color to replace, e.g., (255, 0, 0).
+      new_color (tuple): The RGB color to use as replacement, e.g., (255, 255, 255).
+      tolerance (int): Optional tolerance for matching the old_color. Default is 0 (exact match).
 
-    # Build match mask
-    r_match = np.abs(rgb_array[:, :, 0] - old_color[0]) <= tolerance
-    g_match = np.abs(rgb_array[:, :, 1] - old_color[1]) <= tolerance
-    b_match = np.abs(rgb_array[:, :, 2] - old_color[2]) <= tolerance
-    match_mask = r_match & g_match & b_match
+  Returns:
+      pygame.Surface: A new surface with the color replaced.
+  """
+  # Ensure the surface has per-pixel alpha
+  surface = surface.convert_alpha()
 
-    # Replace color
-    rgb_array[match_mask] = new_color
+  # Copy to avoid modifying the original surface
+  new_surface = surface.copy()
 
-    # Unlock pixel arrays
-    del rgb_array
-    del alpha_array
+  # Get pixel arrays
+  rgb_array = pygame.surfarray.pixels3d(new_surface)
+  alpha_array = pygame.surfarray.pixels_alpha(new_surface)
 
-    return new_surface
+  # Build match mask
+  r_match = np.abs(rgb_array[:, :, 0] - old_color[0]) <= tolerance
+  g_match = np.abs(rgb_array[:, :, 1] - old_color[1]) <= tolerance
+  b_match = np.abs(rgb_array[:, :, 2] - old_color[2]) <= tolerance
+  match_mask = r_match & g_match & b_match
+
+  # Replace color
+  rgb_array[match_mask] = new_color
+
+  # Unlock pixel arrays
+  del rgb_array
+  del alpha_array
+
+  return new_surface
 
 def tint_surface(surface: pygame.Surface, tint_color):
   """Apply a color tint to a white image with transparency."""
@@ -87,6 +87,23 @@ def draw_nine_slice_scaled(slices, surface: pygame.Surface, rect, tile_size, sca
   for i in range(x + s, x + w - s, s):
     for j in range(y + s, y + h - s, s):
       surface.blit(pygame.transform.scale(slices["c"], (s, s)), (i, j))
+
+def wrap_text(text, font, max_width):
+  words = text.split(" ")
+  lines = []
+  current_line = ""
+
+  for word in words:
+    test_line = current_line + word + " "
+    if font.size(test_line)[0] <= max_width:
+      current_line = test_line
+    else:
+      lines.append(current_line.strip())
+      current_line = word + " "
+  if current_line:
+    lines.append(current_line.strip())
+
+  return lines
 
 
 def draw_text(surface, text, color, rect, font, aa=False, bkg=None):

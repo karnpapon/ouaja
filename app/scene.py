@@ -245,6 +245,7 @@ class GameScene(BaseScene):
 
     self.player_pos = [100, 100]
     self.font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
+    self.font_input = font_input
     self.small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
     self.camera = camera
     self.fx_swirl = fx_swirl
@@ -523,7 +524,7 @@ class GameScene(BaseScene):
       # self.current_answer = ""
       self.timeout = const.FPS * const.TIMEOUT_FACTOR
 
-    ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
+    ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 74)
     ghost_msg = ghost_msg.render(str(self.current_answer), True, const.RED)
 
     # Draw "YES" and "NO"
@@ -585,9 +586,14 @@ class GameScene(BaseScene):
         "/synth_coord", [self.entity.position.x / const.WIDTH, 1.0 - self.entity.position.y / const.HEIGHT])
 
     self.panel_input_msg_box_rect.width = self.textinput.surface.get_width()
+    self.panel_input_msg_box_rect.height = self.textinput.surface.get_height()
     self.panel_input_msg_box_rect.x = (
         (screen.get_width() / 2) - ouija_pos[0]) - 90
     self.panel_input_msg_box_rect.y = screen.get_height() - ouija_pos[1]
+
+    _text_rect_input = self.panel_input_msg_box_rect
+    _text_rect_input.centerx = screen.get_width() // 2
+    _text_rect_input.centery = self.panel_input_msg_box_rect.y + 50
 
     if self.evaluating:
       eval_bg_color = (0, 0, 0)
@@ -600,10 +606,9 @@ class GameScene(BaseScene):
         self.eval_counter = const.GLOW_DURATION_FRAMES
         eval_bg_color = (0, 0, 0)
       pygame.draw.rect(buffer, eval_bg_color,
-                       self.panel_input_msg_box_rect, width=0)
+                       _text_rect_input, width=0)
 
-    buffer.blit(self.textinput.surface, (self.panel_input_msg_box_rect.x +
-                25, self.panel_input_msg_box_rect.y + 14))
+    buffer.blit(self.textinput.surface, (_text_rect_input.x, _text_rect_input.y))
 
     # draw_nine_slice_scaled(
     #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
