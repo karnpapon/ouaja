@@ -36,7 +36,8 @@ def write_file(_question, _response):
 
 def ask(question):
   text = f"{question}"
-  response = conversation_with_summary.predict(input=text)  # "i'm here now"
+  # conversation_with_summary.predict(input=text)  # "i'm here now"
+  response = "i'm here now"
   states.reply_answer.put(response)
   write_file(question, response)
 
@@ -193,7 +194,8 @@ class IntroScene(BaseScene):
 
     self.panel_input_msg_box_rect.width = self.textinput.surface.get_width()
     self.panel_input_msg_box_rect.height = self.textinput.surface.get_height()
-    self.panel_input_msg_box_rect.x = (screen.get_width() // 2 - (title.get_width() // 2))
+    self.panel_input_msg_box_rect.x = (
+        screen.get_width() // 2 - (title.get_width() // 2))
     self.panel_input_msg_box_rect.y = screen.get_height() // 2
 
     if self.evaluating:
@@ -235,6 +237,16 @@ class GameScene(BaseScene):
     fx_swirl.scale((swirl_fx_frames[0].get_width(),
                     swirl_fx_frames[0].get_height()))
 
+    soul_moving_frame_paths = [
+        f"assets/sprites/soul_moving/soul_moving_{i}.png" for i in range(5, 20)
+    ]
+    soul_moving_frames = [pygame.image.load(path).convert_alpha()
+                          for path in soul_moving_frame_paths]
+    soul_moving_sprites = pyganim.PygAnimation(
+        [(frame, 0.05) for frame in soul_moving_frames], loop=True)
+    soul_moving_sprites.scale((soul_moving_frames[0].get_width() * 3,
+                               soul_moving_frames[0].get_height() * 3))
+
     camera = Camera()
 
     font_input = pygame.font.Font("assets/fonts/NicerNightie.ttf", 58)
@@ -249,6 +261,7 @@ class GameScene(BaseScene):
     self.small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
     self.camera = camera
     self.fx_swirl = fx_swirl
+    self.soul_moving = soul_moving_sprites
     self.textinput = text_input
     self.haunted_last_call_time = 0
     self.haunted_interval = 200  # ms
@@ -593,7 +606,7 @@ class GameScene(BaseScene):
 
     _text_rect_input = self.panel_input_msg_box_rect
     _text_rect_input.centerx = screen.get_width() // 2
-    _text_rect_input.centery = self.panel_input_msg_box_rect.y + 50
+    _text_rect_input.centery = self.panel_input_msg_box_rect.y - 50
 
     if self.evaluating:
       eval_bg_color = (0, 0, 0)
@@ -608,7 +621,8 @@ class GameScene(BaseScene):
       pygame.draw.rect(buffer, eval_bg_color,
                        _text_rect_input, width=0)
 
-    buffer.blit(self.textinput.surface, (_text_rect_input.x, _text_rect_input.y))
+    buffer.blit(self.textinput.surface,
+                (_text_rect_input.x, _text_rect_input.y))
 
     # draw_nine_slice_scaled(
     #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
@@ -624,21 +638,38 @@ class GameScene(BaseScene):
         node_id = self.activation_order[self.activation_index]
         # nodes[node_id]["activated"] = True
         if const.CHARACTERS.get(node_id):
+          # print(f"Activating node: {node_id}")
           start_pos = const.CHARACTERS[node_id]["pos"]
 
           for target_id in const.CHARACTERS[node_id]["nodes"]:
             end_pos = const.CHARACTERS[target_id]["pos"]
             end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
-            _start = (start_pos[0] + 35 + ouija_pos[0], start_pos[1] + 24 + ouija_pos[1])
-            _end = (end_pos[0] + end_pos_offset[0] + ouija_pos[0], end_pos[1] + end_pos_offset[1] + ouija_pos[1])
-            _dur = random.uniform(50, 400)
+            _start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
+                      start_pos[1] + 24 + ouija_pos[1])
+            _end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
+                    end_pos[1] + end_pos_offset[1] + ouija_pos[1])
+            _dur = 1000  # random.uniform(50, 400)
+
+            fx_soul_moving_anim = self.soul_moving.getCopy()
+            fx_soul_moving_sprite = FXSprite(
+              fx_soul_moving_anim, 
+              _start, 
+              const.GLOW_DURATION_FRAMES * len(self.soul_moving._images) * 4
+            )
+            
+            fx_soul_moving_sprite.start()
+            fx_soul_moving_sprite.set_rotation_towards(_end)
+            
+
             self.signals.append({
                 "start": _start,
                 "end": _end,
                 "start_time": current_time,
                 "duration": _dur,
                 "ease_x": CubicEaseOut(start=_start[0], end=_end[0], duration=_dur),
-                "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur)
+                "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur),
+                "sprite": fx_soul_moving_sprite,
+                "target_id": target_id
             })
 
         self.activation_index += 1
@@ -647,13 +678,15 @@ class GameScene(BaseScene):
       for sig in self.signals:
         elapsed = current_time - sig["start_time"]
         progress = elapsed / sig["duration"]
+        sig["sprite"].update(elapsed) 
 
         if progress < 1.0:
           ease_x = sig["ease_x"].ease(elapsed)
           ease_y = sig["ease_y"].ease(elapsed)
 
+          # if sig["target_id"] is not " " and const.CHARACTERS.get(sig["target_id"]):
           utils.draw_line_with_signal(
-              screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress)
+              screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"])
           new_signals.append(sig)
         else:
           # Reached the target — light it up!

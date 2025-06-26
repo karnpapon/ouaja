@@ -11,6 +11,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 def main():
   pygame.init()
   pygame.display.set_caption("-")
+  pygame.mouse.set_visible(False) 
   screen = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
   clock = pygame.time.Clock()
 

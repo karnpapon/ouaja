@@ -1,5 +1,5 @@
 WIDTH = 960
-HEIGHT = 540
+HEIGHT = 640
 
 USER = "Person:"
 PROMPT_TEXT = "GHOST"
@@ -15,7 +15,7 @@ TIMEOUT_FACTOR = 2
 FPS = 30
 VELOCITY = 2
 MOVE_MODE = 1 # 1: normal, 2: teleport
-ACTIVATE_NODES = 0 # 1: true, 0: false
+ACTIVATE_NODES = 1 # 1: true, 0: false
 TRIGGER_MODE = 1 # 1: true, 0: false
 HAUNTED_MODE = 0 # 1: true, 0: false
 

@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+from .sprite import FXSprite
 
 def clamp(minimum, x, maximum):
   return max(minimum, min(x, maximum))
@@ -174,9 +175,10 @@ def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
 def blend_color(start_color, end_color, t):
   return tuple(int(start + (end - start) * t) for start, end in zip(start_color, end_color))
 
-def draw_line_with_signal(sc, start, end, progress):
+def draw_line_with_signal(sc: pygame.Surface, start, end, progress, sprite: FXSprite):
   # pygame.draw.line(sc, (80, 80, 80), start, end, 2)
   if 0 <= progress <= 1:
     x = start[0] + (end[0] - start[0]) * progress
     y = start[1] + (end[1] - start[1]) * progress
-    pygame.draw.circle(sc, (255, 255, 255), (int(x), int(y)), 8)
+    # sprite.position = (int(x - (sprite.image.get_width()/2 ) - 5), int(y - (sprite.image.get_height()/2 ) - 5))
+    sc.blit(sprite.image, (int(x - (sprite.image.get_width()/2 ) - 5), int(y - (sprite.image.get_height()/2 ) - 5)))
