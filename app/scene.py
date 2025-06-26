@@ -14,7 +14,7 @@ from . import arg
 from external import pyganim
 from .entity import Entity
 from .camera import Camera
-from .sprite import FXSprite
+from .sprite import FXSprite, SpriteSheet, AnimationFactory
 from .model import conversation_with_summary
 
 response = None
@@ -95,23 +95,6 @@ class SceneManager:
 
 class BaseScene:
   def __init__(self):
-    # Load soul animation frames dynamically
-    soul_frame_paths = [
-        f"assets/sprites/soul/soul_{i}.png" for i in range(1, 9)
-    ]
-    soul_frames = [pygame.image.load(path).convert_alpha()
-                   for path in soul_frame_paths]
-
-    player_sprites = pyganim.PygAnimation(
-        [(frame, 0.1) for frame in soul_frames])
-    player_sprites.scale((soul_frames[0].get_width() * 5,
-                          soul_frames[0].get_height() * 5))
-    player_sprites.play()
-
-    entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y,
-                    const.RED, player_sprites, soul_frames[0])
-
-    self.entity = entity
     self.setup_done = False
 
   def on_enter(self): pass
@@ -124,6 +107,13 @@ class BaseScene:
 class IntroScene(BaseScene):
   def __init__(self):
     super().__init__()
+    soul_sheet = SpriteSheet("assets/sprites/soul.png")
+    soul_anim_factory = AnimationFactory(soul_sheet)
+    soul_sprite = soul_anim_factory.create_animation_strip(0, 0, 9, 16, 8, duration=0.1,scale=5.0)
+    soul_sprite.play()
+    entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y,
+                    const.RED, soul_sprite, soul_sheet.sheet)
+    self.entity = entity
 
     self.evaluating = False
     self.eval_counter = const.GLOW_DURATION_FRAMES
@@ -217,35 +207,30 @@ class IntroScene(BaseScene):
 class GameScene(BaseScene):
   def __init__(self):
     super().__init__()
-    # Load swirl effect frames dynamically and apply color replacement
-    swirl_fx_frame_paths = [
-        f"assets/sprites/swirl/frame_{i:02d}.png" for i in range(17)
-    ]
-    swirl_fx_frames = [pygame.image.load(
-        path).convert_alpha() for path in swirl_fx_frame_paths]
 
-    replace_color_swirl_fx_frames = [
-        utils.replace_color(frame, const.TEXT_COLOR,
-                            const.TEXT_LIGHTEST_COLOR, tolerance=0)
-        for frame in swirl_fx_frames
-    ]
+    soul_sheet = SpriteSheet("assets/sprites/soul.png")
+    soul_anim_factory = AnimationFactory(soul_sheet)
+    soul_sprite = soul_anim_factory.create_animation_strip(
+        0, 0, 9, 16, 8, duration=0.1, scale=5.0)
+    soul_sprite.play()
+    entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y,
+                    const.RED, soul_sprite, soul_sheet.sheet)
+    self.entity = entity
 
-    fx_swirl = pyganim.PygAnimation(
-        [(frame, 0.05) for frame in replace_color_swirl_fx_frames],
-        loop=False
-    )
-    fx_swirl.scale((swirl_fx_frames[0].get_width(),
-                    swirl_fx_frames[0].get_height()))
+    smoke_sheet = SpriteSheet("assets/sprites/smoke.png")
+    smoke_anim_factory = AnimationFactory(smoke_sheet)
+    smoke_sprite = smoke_anim_factory.create_animation_strip(
+        0, 1*64, 64, 64, 16, duration=0.05, spacing=0, scale=2.0, tint_color=const.TEXT_LIGHTEST_COLOR, loop=False)
+    smoke_sprite.play()
 
-    soul_moving_frame_paths = [
-        f"assets/sprites/soul_moving/soul_moving_{i}.png" for i in range(5, 20)
-    ]
-    soul_moving_frames = [pygame.image.load(path).convert_alpha()
-                          for path in soul_moving_frame_paths]
-    soul_moving_sprites = pyganim.PygAnimation(
-        [(frame, 0.05) for frame in soul_moving_frames], loop=True)
-    soul_moving_sprites.scale((soul_moving_frames[0].get_width() * 3,
-                               soul_moving_frames[0].get_height() * 3))
+    smoke_moving_anim_factory = AnimationFactory(smoke_sheet)
+    smoke_moving_sprite = smoke_moving_anim_factory.create_animation_strip(
+        0, 5*64, 64, 64, 16, duration=0.05, spacing=0, scale=1.4, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
+
+    smoke_sheet_2 = SpriteSheet("assets/sprites/smoke_2.png")
+    smoke_moving_reach_anim_factory = AnimationFactory(smoke_sheet_2)
+    smoke_moving_reach_sprite = smoke_moving_reach_anim_factory.create_animation_strip(
+        0, 22*64, 64, 64, 12, duration=0.05, spacing=0, scale=1.4, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
 
     camera = Camera()
 
@@ -260,8 +245,9 @@ class GameScene(BaseScene):
     self.font_input = font_input
     self.small_font = pygame.font.Font("assets/fonts/NicerNightie.ttf", 48)
     self.camera = camera
-    self.fx_swirl = fx_swirl
-    self.soul_moving = soul_moving_sprites
+    self.fx_swirl = smoke_sprite
+    self.fx_reach = smoke_moving_reach_sprite
+    self.soul_moving = smoke_moving_sprite
     self.textinput = text_input
     self.haunted_last_call_time = 0
     self.haunted_interval = 200  # ms
@@ -381,6 +367,7 @@ class GameScene(BaseScene):
     self.signals = []
     self.answer_index = 0
     self.all_sprites = pygame.sprite.Group()
+    self.all_fx_sprites = pygame.sprite.Group()
     self.to = pygame.Vector2(0)
 
     self.border_image = pygame.image.load(
@@ -457,10 +444,10 @@ class GameScene(BaseScene):
           fx_anim = self.fx_swirl.getCopy()
           fx_sprite = FXSprite(fx_anim, (
               ((_char_data["pos"][0] -
-                  self.fx_swirl.getFrame(0).get_width() / 2) + 95) + ouija_pos[0],
+                  self.fx_swirl.getFrame(0).get_width() / 2) + 74) + ouija_pos[0],
               ((_char_data["pos"][1] -
-                  self.fx_swirl.getFrame(0).get_height() / 2) + 78) + ouija_pos[1]
-          ), const.GLOW_DURATION_FRAMES * len(self.fx_swirl._images))
+                  self.fx_swirl.getFrame(0).get_height() / 2) + 84) + ouija_pos[1]
+          ), const.GLOW_DURATION_FRAMES * self.fx_swirl.numFrames * 2)
           self.all_sprites.add(fx_sprite)
           fx_sprite.start()
         # self.fx_swirl.play()
@@ -472,8 +459,6 @@ class GameScene(BaseScene):
 
         if (not const.HAUNTED_MODE):
           self.answer_index += 1
-
-        # self.camera.start_shake()
 
         if self.answer_index < len(self.answer):
           char = self.answer[self.answer_index].upper()
@@ -508,7 +493,6 @@ class GameScene(BaseScene):
       self.all_sprites.add(fx_sprite)
       fx_sprite.start()
 
-      # if (random.choice([0, 1])):
       self.camera.start_shake()
       self.haunted_interval = random.uniform(
           self.haunted_rand_lower_bound, self.haunted_rand_upper_bound)
@@ -566,13 +550,6 @@ class GameScene(BaseScene):
     _text_rect.centery = 148+ouija_pos[1]
 
     buffer.blit(ghost_msg, _text_rect)
-    # utils.draw_text(
-    #     buffer,
-    #     self.current_answer,
-    #     const.WHITE,
-    #     [70 + ouija_pos[0], 130+ouija_pos[1], 805, 78*4],
-    #     pygame.font.Font("assets/fonts/NicerNightie.ttf", 62)
-    # )
 
     if (self.glow_frame_counter > 0):
       self.all_sprites.update(self.glow_frame_counter)
@@ -645,21 +622,21 @@ class GameScene(BaseScene):
             end_pos = const.CHARACTERS[target_id]["pos"]
             end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
             _start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
-                      start_pos[1] + 24 + ouija_pos[1])
+                                         start_pos[1] + 24 + ouija_pos[1])
             _end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
-                    end_pos[1] + end_pos_offset[1] + ouija_pos[1])
-            _dur = 1000  # random.uniform(50, 400)
+                                       end_pos[1] + end_pos_offset[1] + ouija_pos[1])
+            _dur = random.uniform(50, 1000)
 
             fx_soul_moving_anim = self.soul_moving.getCopy()
             fx_soul_moving_sprite = FXSprite(
-              fx_soul_moving_anim, 
-              _start, 
-              const.GLOW_DURATION_FRAMES * len(self.soul_moving._images) * 4
+                fx_soul_moving_anim,
+                _start,
+                const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames 
             )
-            
+
+            # self.all_fx_sprites.add(fx_soul_moving_sprite)
             fx_soul_moving_sprite.start()
             fx_soul_moving_sprite.set_rotation_towards(_end)
-            
 
             self.signals.append({
                 "start": _start,
@@ -678,19 +655,22 @@ class GameScene(BaseScene):
       for sig in self.signals:
         elapsed = current_time - sig["start_time"]
         progress = elapsed / sig["duration"]
-        sig["sprite"].update(elapsed) 
+
+        sig["sprite"].update(elapsed)
+        self.all_fx_sprites.update(elapsed)
+        self.all_fx_sprites.draw(screen)
 
         if progress < 1.0:
           ease_x = sig["ease_x"].ease(elapsed)
           ease_y = sig["ease_y"].ease(elapsed)
 
-          # if sig["target_id"] is not " " and const.CHARACTERS.get(sig["target_id"]):
           utils.draw_line_with_signal(
               screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"])
           new_signals.append(sig)
         else:
           # Reached the target — light it up!
           for node_id, data in const.CHARACTERS.items():
+          
             end_pos_offset = (22, -35) if node_id == "O" else (22, -20)
             # revert offset to compare with const.CHARACTERS
             end_sig_pos = (sig["end"][0] + end_pos_offset[0] + -ouija_pos[0],
@@ -699,6 +679,11 @@ class GameScene(BaseScene):
               # data["activated"] = True
               self.activation_order.append(node_id.upper())
               # activation_index += 1
+              _fx_reach_anim = self.fx_reach.getCopy()
+              _fx_reach_sprite = FXSprite(_fx_reach_anim, pygame.Vector2(end_sig_pos[0]+10, end_sig_pos[1] + 24), const.GLOW_DURATION_FRAMES * self.fx_reach.numFrames * 10)
+              _fx_reach_sprite.start()
+              self.all_fx_sprites.add(_fx_reach_sprite)
+
               if (const.TRIGGER_MODE):
                 arg.client.send_message("/synth_shot_nodes", [])
               break

@@ -17,7 +17,7 @@ class Entity(object):
 
   def draw(self, buffer, ouija_pos):
     self.sprite_anim.blit(buffer, (
-        ((self.position.x - self.soul_frames.get_width() / 2)) + ouija_pos[0],
+        ((self.position.x - self.soul_frames.get_width() / 2)) + ouija_pos[0] + 20,
         ((self.position.y -
          self.soul_frames.get_height() / 2) - 25 + ouija_pos[1])
     ))
