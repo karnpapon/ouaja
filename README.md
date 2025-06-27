@@ -54,3 +54,4 @@ to communicate with audio engine i'm using OSC, here's my currently used OSC msg
 # Credits
 - `Nicer Nightie` font,  https://unfilledflag.itch.io/nicer-nightie
 - `hexany`, UI panel https://hexany-ives.itch.io/hexanys-1-bit-ui-panels
+- `Free Smoke Fx Pixel 2`, spritesheet https://bdragon1727.itch.io/free-smoke-fx-pixel-2
