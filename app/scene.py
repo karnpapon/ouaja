@@ -36,8 +36,7 @@ def write_file(_question, _response):
 
 def ask(question):
   text = f"{question}"
-  # conversation_with_summary.predict(input=text)  # "i'm here now"
-  response = "i'm here now"
+  response = conversation_with_summary.predict(input=text)  # "i'm here now"
   states.reply_answer.put(response)
   write_file(question, response)
 
@@ -109,7 +108,8 @@ class IntroScene(BaseScene):
     super().__init__()
     soul_sheet = SpriteSheet("assets/sprites/soul.png")
     soul_anim_factory = AnimationFactory(soul_sheet)
-    soul_sprite = soul_anim_factory.create_animation_strip(0, 0, 9, 16, 8, duration=0.1,scale=5.0)
+    soul_sprite = soul_anim_factory.create_animation_strip(
+        0, 0, 9, 16, 8, duration=0.1, scale=5.0)
     soul_sprite.play()
     entity = Entity(const.INIT_POINT_X, const.INIT_POINT_Y,
                     const.RED, soul_sprite, soul_sheet.sheet)
@@ -218,19 +218,22 @@ class GameScene(BaseScene):
     self.entity = entity
 
     smoke_sheet = SpriteSheet("assets/sprites/smoke.png")
+    smoke_sheet_2 = SpriteSheet("assets/sprites/smoke_2.png")
+    # smoke_moving_sheet = SpriteSheet("assets/sprites/smoke_moving.png")
+    # smoke_reach_sheet = SpriteSheet("assets/sprites/smoke_reach.png")
+
     smoke_anim_factory = AnimationFactory(smoke_sheet)
     smoke_sprite = smoke_anim_factory.create_animation_strip(
         0, 1*64, 64, 64, 16, duration=0.05, spacing=0, scale=2.0, tint_color=const.TEXT_LIGHTEST_COLOR, loop=False)
     smoke_sprite.play()
 
-    smoke_moving_anim_factory = AnimationFactory(smoke_sheet)
+    smoke_moving_anim_factory = AnimationFactory(smoke_sheet_2)
     smoke_moving_sprite = smoke_moving_anim_factory.create_animation_strip(
-        0, 5*64, 64, 64, 16, duration=0.05, spacing=0, scale=1.4, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
+        0, 1*64, 64, 64, 12, duration=0.05, spacing=0, scale=2, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
 
-    smoke_sheet_2 = SpriteSheet("assets/sprites/smoke_2.png")
     smoke_moving_reach_anim_factory = AnimationFactory(smoke_sheet_2)
     smoke_moving_reach_sprite = smoke_moving_reach_anim_factory.create_animation_strip(
-        0, 22*64, 64, 64, 12, duration=0.05, spacing=0, scale=1.4, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
+        0, 22*64, 64, 64, 12, duration=0.05, spacing=0, scale=1.4, tint_color=const.TEXT_LIGHTEST_COLOR, loop=False)
 
     camera = Camera()
 
@@ -367,7 +370,7 @@ class GameScene(BaseScene):
     self.signals = []
     self.answer_index = 0
     self.all_sprites = pygame.sprite.Group()
-    self.all_fx_sprites = pygame.sprite.Group()
+    # self.all_fx_sprites = pygame.sprite.Group()
     self.to = pygame.Vector2(0)
 
     self.border_image = pygame.image.load(
@@ -551,9 +554,9 @@ class GameScene(BaseScene):
 
     buffer.blit(ghost_msg, _text_rect)
 
-    if (self.glow_frame_counter > 0):
-      self.all_sprites.update(self.glow_frame_counter)
-      self.all_sprites.draw(buffer)
+    # if (self.glow_frame_counter > 0):
+    self.all_sprites.update(self.glow_frame_counter)
+    self.all_sprites.draw(buffer)
 
     if (self.answer):
       if (const.MOVE_MODE == 1):
@@ -631,7 +634,7 @@ class GameScene(BaseScene):
             fx_soul_moving_sprite = FXSprite(
                 fx_soul_moving_anim,
                 _start,
-                const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames 
+                const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames
             )
 
             # self.all_fx_sprites.add(fx_soul_moving_sprite)
@@ -657,8 +660,8 @@ class GameScene(BaseScene):
         progress = elapsed / sig["duration"]
 
         sig["sprite"].update(elapsed)
-        self.all_fx_sprites.update(elapsed)
-        self.all_fx_sprites.draw(screen)
+        # self.all_fx_sprites.update(elapsed)
+        # self.all_fx_sprites.draw(screen)
 
         if progress < 1.0:
           ease_x = sig["ease_x"].ease(elapsed)
@@ -670,7 +673,7 @@ class GameScene(BaseScene):
         else:
           # Reached the target — light it up!
           for node_id, data in const.CHARACTERS.items():
-          
+
             end_pos_offset = (22, -35) if node_id == "O" else (22, -20)
             # revert offset to compare with const.CHARACTERS
             end_sig_pos = (sig["end"][0] + end_pos_offset[0] + -ouija_pos[0],
@@ -680,9 +683,12 @@ class GameScene(BaseScene):
               self.activation_order.append(node_id.upper())
               # activation_index += 1
               _fx_reach_anim = self.fx_reach.getCopy()
-              _fx_reach_sprite = FXSprite(_fx_reach_anim, pygame.Vector2(end_sig_pos[0]+10, end_sig_pos[1] + 24), const.GLOW_DURATION_FRAMES * self.fx_reach.numFrames * 10)
+              _fx_reach_sprite = FXSprite(_fx_reach_anim, pygame.Vector2(
+                ( data["pos"][0]+10 ) + ouija_pos[0], ( data["pos"][1] + 24 ) + ouija_pos[1]), 
+                const.GLOW_DURATION_FRAMES * self.fx_reach.numFrames
+              )
               _fx_reach_sprite.start()
-              self.all_fx_sprites.add(_fx_reach_sprite)
+              self.all_sprites.add(_fx_reach_sprite)
 
               if (const.TRIGGER_MODE):
                 arg.client.send_message("/synth_shot_nodes", [])

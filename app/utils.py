@@ -181,4 +181,5 @@ def draw_line_with_signal(sc: pygame.Surface, start, end, progress, sprite: FXSp
     x = start[0] + (end[0] - start[0]) * progress
     y = start[1] + (end[1] - start[1]) * progress
     # sprite.position = (int(x - (sprite.image.get_width()/2 ) - 5), int(y - (sprite.image.get_height()/2 ) - 5))
+    # pygame.draw.circle(sc, (255, 255, 255), (int(x), int(y)), 8)
     sc.blit(sprite.image, (int(x - (sprite.image.get_width()/2 )), int(y - (sprite.image.get_height()/2 ))))

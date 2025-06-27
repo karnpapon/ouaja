@@ -43,7 +43,6 @@ class FXSprite(pygame.sprite.Sprite):
     super().__init__()
     self.animation = animation
     self.position = position
-    self.position_to = pygame.Vector2(0)
     self.started = False
 
     self.image = pygame.Surface(position, pygame.SRCALPHA)
