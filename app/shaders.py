@@ -29,6 +29,9 @@ class GraphicEngine:
 
     self.ctx = moderngl.create_context()
     self.style = style
+    self.ctx.enable(moderngl.BLEND)
+    self.ctx.blend_func = (moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA)
+    self.offscreen = self.ctx.framebuffer(color_attachments=[self.ctx.texture(self.VIRTUAL_RES, 3)])
 
     self.texture_coordinates = [0, 0, 1, 0, 0, 1, 1, 1]
     self.world_coordinates = [-1, -1, 1, -1, -1, 1, 1, 1]
@@ -67,10 +70,10 @@ class GraphicEngine:
     self.prog["u_color_tex"] = 1
     self.prog["u_screen_tex"] = 2
 
-    self.prog["u_bit_depth"].value = 26
-    self.prog["u_contrast"].value = 1.5
-    self.prog["u_offset"].value = 0.5
-    self.prog["u_dither_size"].value = 1.0
+    self.prog["u_bit_depth"].value = 82.8
+    self.prog["u_contrast"].value = -0.5
+    self.prog["u_offset"].value = 0.0
+    self.prog["u_dither_size"].value = 0.5
 
     # Setup geometry
     self.vbo = self.ctx.buffer(struct.pack('8f', *self.world_coordinates))
@@ -99,12 +102,23 @@ class GraphicEngine:
       pygame.display.update()
       return
 
-    # self.screen.fill((255, 0, 0))
     texture_data = pygame.image.tostring(self.screen, "RGB", True)
     self.screen_texture.write(texture_data)
 
-    # self.ctx.clear(14 / 255, 40 / 255, 66 / 255)
+    self.offscreen.use()
+    self.ctx.clear(0.0, 0.0, 0.0, 1.0)
+    # self.screen_texture.use(location=2) 
+    self.prog["u_screen_tex"] = 2
     self.vao.render()
+
+    self.ctx.screen.use()
+    # self.screen_texture.use(location=0) 
+    # self.offscreen.color_attachments[0].use(location=1) 
+
+    # self.prog["u_base_tex"] = 0
+    # self.prog["u_overlay_tex"] = 1
+    self.vao.render() 
+
     pygame.display.flip()
 
   def set_fullscreen(self, REAL_RES):

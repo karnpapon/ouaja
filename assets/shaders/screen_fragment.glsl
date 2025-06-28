@@ -7,10 +7,18 @@ uniform sampler2D u_dither_tex;
 uniform sampler2D u_color_tex;
 uniform sampler2D u_screen_tex;
 
-uniform int u_bit_depth;
+uniform float u_bit_depth;
 uniform float u_contrast;
 uniform float u_offset;
 uniform float u_dither_size;
+
+vec3 overlay_blend(vec3 base, vec3 overlay) {
+    return vec3(
+        base.r < 0.5 ? (2.0 * base.r * overlay.r) : (1.0 - 2.0 * (1.0 - base.r) * (1.0 - overlay.r)),
+        base.g < 0.5 ? (2.0 * base.g * overlay.g) : (1.0 - 2.0 * (1.0 - base.g) * (1.0 - overlay.g)),
+        base.b < 0.5 ? (2.0 * base.b * overlay.b) : (1.0 - 2.0 * (1.0 - base.b) * (1.0 - overlay.b))
+    );
+}
 
 void main()
 {
@@ -27,7 +35,7 @@ void main()
     lum = clamp(lum, 0.0, 1.0);
 
     // // Reduce bit depth
-    float bits = float(u_bit_depth);
+    float bits = u_bit_depth;
     lum = floor(lum * bits) / bits;
 
     // // Palette banding
@@ -52,9 +60,17 @@ void main()
     float col_sample = mix(lum_lower, lum_upper, ramp_val);
     // vec3 final_col = texture(u_color_tex, vec2(col_sample, 0.5)).rgb;
 
-    vec2 col_tex_size = vec2(textureSize(u_color_tex, 0));
-    vec2 palette_uv = vec2(col_sample, (0.5 / col_tex_size.y));
-    vec3 final_col = texture(u_color_tex, palette_uv).rgb;
+    vec3 base_color = texture(u_screen_tex, fragUV).rgb;
 
-    FragColor = vec4(final_col, 1.0);
+    // Final dithered palette color
+    vec2 col_tex_size = vec2(textureSize(u_color_tex, 0));
+    vec2 palette_uv = vec2(col_sample, 0.5 / col_tex_size.y);
+    vec3 overlay_color = texture(u_color_tex, palette_uv).rgb;
+
+    vec3 blended_color = overlay_blend(base_color, overlay_color);
+
+    float blend_strength = 1.0;  // Or use uniform if needed
+    vec3 final_color = mix(base_color, blended_color, blend_strength);
+
+    FragColor = vec4(final_color, 1.0);
 }

@@ -4,6 +4,7 @@ import pygame_textinput
 import re
 import ast
 import random
+import os
 import queue
 import threading
 from easing_functions import CubicEaseOut
@@ -20,6 +21,7 @@ from .model import conversation_with_summary
 response = None
 fetching = False
 
+DEBUG = os.getenv("DEBUG", False)
 
 # match commands with prefix (;;).
 command_prefix_pattern = r"(;;\S+)(?:\s+(?:([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)|\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*,\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)))?"
@@ -36,7 +38,11 @@ def write_file(_question, _response):
 
 def ask(question):
   text = f"{question}"
-  response = conversation_with_summary.predict(input=text)  # "i'm here now"
+  response = ""
+  if DEBUG:
+    response = "abcdefghijklmnopqrstuvwxyz"
+  else:
+    response = conversation_with_summary.predict(input=text)
   states.reply_answer.put(response)
   write_file(question, response)
 
@@ -229,7 +235,7 @@ class GameScene(BaseScene):
 
     smoke_moving_anim_factory = AnimationFactory(smoke_sheet_2)
     smoke_moving_sprite = smoke_moving_anim_factory.create_animation_strip(
-        0, 1*64, 64, 64, 12, duration=0.05, spacing=0, scale=2, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
+        0, 1*64, 64, 64, 12, duration=0.05, spacing=0, scale=2.8, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
 
     smoke_moving_reach_anim_factory = AnimationFactory(smoke_sheet_2)
     smoke_moving_reach_sprite = smoke_moving_reach_anim_factory.create_animation_strip(
@@ -648,7 +654,8 @@ class GameScene(BaseScene):
               "ease_x": CubicEaseOut(start=_start[0], end=_end[0], duration=_dur),
               "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur),
               "sprite": fx_soul_moving_sprite,
-              "target_id": target_id
+              "target_id": target_id,
+              "info_target_offset_pos": const.CHARACTERS[target_id]["offset_pos"]
           })
 
       self.activation_index += 1
@@ -665,7 +672,7 @@ class GameScene(BaseScene):
         ease_y = sig["ease_y"].ease(elapsed)
 
         utils.draw_line_with_signal(
-            screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"])
+            screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"], sig["info_target_offset_pos"])
         new_signals.append(sig)
       else:
         for node_id, data in const.CHARACTERS.items():

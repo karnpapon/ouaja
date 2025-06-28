@@ -175,8 +175,8 @@ def get_center_position(surface: pygame.Surface, screen_size: tuple[int]):
 def blend_color(start_color, end_color, t):
   return tuple(int(start + (end - start) * t) for start, end in zip(start_color, end_color))
 
-def draw_line_with_signal(sc: pygame.Surface, start, end, progress, sprite: FXSprite):
-  # pygame.draw.line(sc, (80, 80, 80), start, end, 2)
+def draw_line_with_signal(sc: pygame.Surface, start, end, progress, sprite: FXSprite, target_offset_pos):
+  pygame.draw.line(sc, (255, 255, 255), start, end + target_offset_pos, 4)
   if 0 <= progress <= 1:
     x = start[0] + (end[0] - start[0]) * progress
     y = start[1] + (end[1] - start[1]) * progress
