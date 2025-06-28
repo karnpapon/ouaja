@@ -10,6 +10,7 @@ dependencies = [
     "langchain>=0.3.25",
     "langchain-community>=0.3.25",
     "langchain-openai>=0.3.24",
+    "moderngl>=5.12.0",
     "openai>=1.86.0",
     "pygame>=2.6.1",
     "pygame-render>=1.4.0",
