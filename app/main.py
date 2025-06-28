@@ -29,7 +29,7 @@ def main():
   main_menu_scene = IntroScene()
   scene_manager.push(main_menu_scene)
 
-  # crt_shader = GraphicEngine(screen, VIRTUAL_RES=(pygame.display.get_window_size()[0], pygame.display.get_window_size()[1]), style=0, fullscreen=True)
+  # crt_shader = GraphicEngine(screen, VIRTUAL_RES=(pygame.display.get_window_size()[0], pygame.display.get_window_size()[1]), style=1, fullscreen=True)
   # crt_shader.set_fullscreen((const.WIDTH, const.HEIGHT))
 
   running = True
@@ -45,7 +45,7 @@ def main():
     scene_manager.update(events)
     scene_manager.draw(screen)
     
-    # crt_shader()
+    # crt_shader.render()
     clock.tick(60)
 
   pygame.quit()

@@ -22,81 +22,96 @@ class GraphicEngine:
     self.cpu_only = cpu_only
     self.screen = screen
     self.fullscreen = fullscreen
-    if not (self.cpu_only):
-      self.ctx = moderngl.create_context()
-      # Fix texture coordinates to prevent flipping
-      # Bottom-left, Bottom-right, Top-left, Top-right
-      self.texture_coordinates = [0, 0, 1, 0, 0, 1, 1, 1]
-      self.world_coordinates = [-1, -1, 1, -1, -1, 1, 1, 1]
-      self.render_indices = [0, 1, 2, 1, 2, 3]
 
-      self.style = style
+    if self.cpu_only:
+      self.display = pygame.display.get_surface()
+      return
 
-      # shader style : 0, no shader. 1, crt. 2, flat_crt.
-      with open(resource_path("assets/shaders/screen_vertex.glsl"), "r") as vs_file:
-        vertex_shader_source = vs_file.read()
-      with open(resource_path("assets/shaders/screen_fragment.glsl"), "r") as fs_file:
-        fragment_shader_source = fs_file.read()
-      self.prog = self.ctx.program(
-          vertex_shader=vertex_shader_source,
-          fragment_shader=fragment_shader_source,
-      )
-      # self.prog['mode'] = self.style
+    self.ctx = moderngl.create_context()
+    self.style = style
 
-      # Create texture with correct orientation (no flipping)
-      self.screen_texture = self.ctx.texture(
-          self.VIRTUAL_RES, 3,
-          pygame.image.tostring(screen, "RGB", False)
-      )
+    self.texture_coordinates = [0, 0, 1, 0, 0, 1, 1, 1]
+    self.world_coordinates = [-1, -1, 1, -1, -1, 1, 1, 1]
+    self.render_indices = [0, 1, 2, 1, 2, 3]
 
-      self.screen_texture.repeat_x = False
-      self.screen_texture.repeat_y = False
+    # Load shaders
+    with open(resource_path("assets/shaders/screen_vertex.glsl"), "r") as vs_file:
+      vertex_shader_source = vs_file.read()
+    with open(resource_path("assets/shaders/screen_fragment.glsl"), "r") as fs_file:
+      fragment_shader_source = fs_file.read()
 
-      self.vbo = self.ctx.buffer(struct.pack('8f', *self.world_coordinates))
-      self.uvmap = self.ctx.buffer(
-          struct.pack('8f', *self.texture_coordinates))
-      self.ibo = self.ctx.buffer(struct.pack('6I', *self.render_indices))
+    self.prog = self.ctx.program(
+      vertex_shader=vertex_shader_source,
+      fragment_shader=fragment_shader_source,
+    )
 
-      self.vao_content = [
-          (self.vbo, '2f', 'vert'),
-          (self.uvmap, '2f', 'in_text'),
-      ]
+    # Create screen texture
+    self.screen_texture = self.ctx.texture(
+        self.VIRTUAL_RES, 3,
+        pygame.image.tostring(screen, "RGB", False)
+    )
+    self.screen_texture.repeat_x = False
+    self.screen_texture.repeat_y = False
 
-      self.vao = self.ctx.vertex_array(
-          self.prog, self.vao_content, index_buffer=self.ibo)
-    else:
-      self.diaplay = pygame.display.get_surface()
+    # Load resources
+    self.dither_tex = self.load_texture("imgs/bayer-tile.png")
+    self.color_tex = self.load_texture("imgs/palette-br.png")
 
-  # def change_shader(self):
-  #     if not self.cpu_only:
-  #         self.__init__(self.screen, (self.style + 1) % 3, self.VIRTUAL_RES)
+    # Bind textures
+    self.dither_tex.use(location=0)
+    self.color_tex.use(location=1)
+    self.screen_texture.use(location=2)
+
+    # Set uniforms
+    self.prog["u_dither_tex"] = 0
+    self.prog["u_color_tex"] = 1
+    self.prog["u_screen_tex"] = 2
+
+    self.prog["u_bit_depth"].value = 26
+    self.prog["u_contrast"].value = 1.5
+    self.prog["u_offset"].value = 0.5
+    self.prog["u_dither_size"].value = 1.0
+
+    # Setup geometry
+    self.vbo = self.ctx.buffer(struct.pack('8f', *self.world_coordinates))
+    self.uvmap = self.ctx.buffer(struct.pack('8f', *self.texture_coordinates))
+    self.ibo = self.ctx.buffer(struct.pack('6I', *self.render_indices))
+
+    self.vao_content = [
+        (self.vbo, '2f', 'vert'),
+        (self.uvmap, '2f', 'in_text'),
+    ]
+    self.vao = self.ctx.vertex_array(
+        self.prog, self.vao_content, index_buffer=self.ibo)
+
+  def load_texture(self, relative_path, components=3, mode='RGB'):
+    path = os.path.join("assets", relative_path)
+    surface = pygame.image.load(path).convert()
+    surface = pygame.transform.flip(surface, False, True)
+    data = pygame.image.tostring(surface, mode)
+    tex = self.ctx.texture(surface.get_size(), components, data)
+    tex.build_mipmaps()
+    return tex
 
   def render(self):
-    if not (self.cpu_only):
-      # Convert pygame surface to RGB data for OpenGL texture (no flipping)
-      texture_data = pygame.image.tostring(self.screen, "RGB", True)
-
-      self.screen_texture.write(texture_data)
-      self.ctx.clear(14 / 255, 40 / 255, 66 / 255)
-      self.screen_texture.use()
-      self.vao.render()
-      pygame.display.flip()
-    else:
-      self.diaplay.blit(self.screen, (0, 0))
+    if self.cpu_only:
+      self.display.blit(self.screen, (0, 0))
       pygame.display.update()
+      return
+
+    # self.screen.fill((255, 0, 0))
+    texture_data = pygame.image.tostring(self.screen, "RGB", True)
+    self.screen_texture.write(texture_data)
+
+    # self.ctx.clear(14 / 255, 40 / 255, 66 / 255)
+    self.vao.render()
+    pygame.display.flip()
 
   def set_fullscreen(self, REAL_RES):
-    if not (self.cpu_only):
-      if not (self.fullscreen):
-        pygame.display.set_mode(REAL_RES, pygame.DOUBLEBUF | pygame.OPENGL)
-      else:
-        pygame.display.set_mode(
-            REAL_RES, pygame.DOUBLEBUF | pygame.OPENGL | pygame.FULLSCREEN)
-    else:
-      if not (self.fullscreen):
-        pygame.display.set_mode(self.VIRTUAL_RES)
-      else:
-        pygame.display.set_mode(self.VIRTUAL_RES, pygame.FULLSCREEN)
+    flags = pygame.DOUBLEBUF | (pygame.OPENGL if not self.cpu_only else 0)
+    if self.fullscreen:
+      flags |= pygame.FULLSCREEN
+    pygame.display.set_mode(REAL_RES, flags)
 
   def __call__(self):
-    return self.render()
+    self.render()

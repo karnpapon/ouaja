@@ -74,7 +74,7 @@ class SceneManager:
   def draw(self, screen):
     if len(self.scenes) > 0:
       self.scenes[-1].draw(self, screen)
-    pygame.display.flip()
+    pygame.display.flip() # comment this line if you want to use shaders
 
   def push(self, scene):
     self.exit_scene()
