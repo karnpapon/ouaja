@@ -2,9 +2,9 @@
 
 Window.closeAll;
 // MIDIClient.init;
-s.options.outDevice = "Scarlett 2i4 USB";
+// s.options.outDevice = "Scarlett 2i4 USB";
 // s.options.outDevice = "Audient iD14";
-// s.options.outDevice ="MacBook Pro Speakers";
+s.options.outDevice ="MacBook Pro Speakers";
 // s.options.outDevice ="External Headphones";
 s.options.numInputBusChannels = 0;
 

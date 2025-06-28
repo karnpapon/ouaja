@@ -12,7 +12,7 @@ def main():
   pygame.init()
   pygame.display.set_caption("-")
   pygame.mouse.set_visible(False) 
-  screen = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+  screen = pygame.display.set_mode((const.WIDTH, const.HEIGHT), flags=pygame.NOFRAME)
   clock = pygame.time.Clock()
 
   scene_manager = SceneManager()

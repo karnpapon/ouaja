@@ -433,6 +433,8 @@ class GameScene(BaseScene):
       else:
         if const.ACTIVATE_NODES:
           self.activation_order.append(self.answer[self.answer_index].upper())
+
+        # barbaric weight randomization, lol
         self.current_answer += random.choice(
             [self.answer[self.answer_index].upper(),
              self.answer[self.answer_index].lower(),
@@ -453,7 +455,6 @@ class GameScene(BaseScene):
           ), const.GLOW_DURATION_FRAMES * self.fx_swirl.numFrames * 2)
           self.all_sprites.add(fx_sprite)
           fx_sprite.start()
-        # self.fx_swirl.play()
 
         if (const.TRIGGER_MODE and not const.HAUNTED_MODE):
           arg.client.send_message(
@@ -524,6 +525,64 @@ class GameScene(BaseScene):
       # self.current_answer = ""
       self.timeout = const.FPS * const.TIMEOUT_FACTOR
 
+    self.draw_board(screen, ouija_pos, buffer)
+
+    # if (self.glow_frame_counter > 0):
+    self.all_sprites.update(self.glow_frame_counter)
+    self.all_sprites.draw(buffer)
+
+    if (self.answer):
+      if (const.MOVE_MODE == 1):
+        self.entity.move(self.to)
+      elif (const.MOVE_MODE == 2):
+        self.entity.teleport(self.to)
+
+    self.entity.draw(buffer, ouija_pos)
+    arg.client.send_message(
+        "/synth_coord", [self.entity.position.x / const.WIDTH, 1.0 - self.entity.position.y / const.HEIGHT])
+
+    self.draw_text_input(screen, ouija_pos, buffer)
+
+    screen.fill((0, 0, 0))
+    screen.blit(buffer, self.camera.offset)
+    utils.draw_nine_slice_scaled(
+        self.nine, screen, self.panel_rect, self.tile_size, 2)
+
+    if const.ACTIVATE_NODES:
+      self.draw_nodes_and_connections(screen, ouija_pos, current_time)
+
+  def draw_text_input(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface):
+    """ Draw the text input box for user input. """
+    self.panel_input_msg_box_rect.width = self.textinput.surface.get_width()
+    self.panel_input_msg_box_rect.height = self.textinput.surface.get_height()
+    self.panel_input_msg_box_rect.x = (
+        (screen.get_width() / 2) - ouija_pos[0]) - 90
+    self.panel_input_msg_box_rect.y = ( screen.get_height() - 60 ) - (ouija_pos[1])
+
+    _text_rect_input = self.panel_input_msg_box_rect
+    _text_rect_input.centerx = screen.get_width() // 2
+    _text_rect_input.centery = self.panel_input_msg_box_rect.y
+
+    if self.evaluating:
+      eval_bg_color = (0, 0, 0)
+      if self.eval_counter > 0:
+        self.eval_counter -= 1
+        blend_t = self.eval_counter / const.GLOW_DURATION_FRAMES
+        eval_bg_color = utils.blend_color((180, 0, 0), (0, 0, 0), 1 - blend_t)
+      else:
+        self.evaluating = False
+        self.eval_counter = const.GLOW_DURATION_FRAMES
+        eval_bg_color = (0, 0, 0)
+      pygame.draw.rect(buffer, eval_bg_color,
+                       _text_rect_input, width=0)
+
+    buffer.blit(self.textinput.surface,
+                (_text_rect_input.x, _text_rect_input.y))
+    # draw_nine_slice_scaled(
+    #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
+
+  def draw_board(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface):
+    """ Draw the ghost board with letters and messages. """
     ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 74)
     ghost_msg = ghost_msg.render(str(self.current_answer), True, const.RED)
 
@@ -542,7 +601,7 @@ class GameScene(BaseScene):
         display_letter = "(  )"
       else:
         display_letter = letter.lower() if letter.isalpha() else letter
-      color = bg_color if display_letter.isalpha() else const.TEXT_COLOR
+      color = const.BG_COLOR if display_letter.isalpha() else const.TEXT_COLOR
       text = self.small_font.render(f"{display_letter}", True, color)
       pos = [const.CHARACTERS[letter]["pos"][0] + ouija_pos[0],
              const.CHARACTERS[letter]["pos"][1] + ouija_pos[1]]
@@ -554,146 +613,82 @@ class GameScene(BaseScene):
 
     buffer.blit(ghost_msg, _text_rect)
 
-    # if (self.glow_frame_counter > 0):
-    self.all_sprites.update(self.glow_frame_counter)
-    self.all_sprites.draw(buffer)
+  def draw_nodes_and_connections(self, screen: pygame.Surface, ouija_pos: tuple[int, int], current_time: pygame.Surface):
+    """ Draw the nodes and connections between them. """
+    if self.activation_index < len(self.activation_order):
+      node_id = self.activation_order[self.activation_index]
+      # nodes[node_id]["activated"] = True
+      if const.CHARACTERS.get(node_id):
+        start_pos = const.CHARACTERS[node_id]["pos"]
 
-    if (self.answer):
-      if (const.MOVE_MODE == 1):
-        self.entity.move(self.to)
-        # if self.answer_index > 0:
-        # # self.all_sprites.draw(buffer)
-        # _char_data = const.CHARACTERS.get(self.answer[self.answer_index - 1])
-        # if _char_data is not None:
-        #   self.fx_swirl.blit(buffer, (
-        #       ((_char_data["pos"][0] -
-        #         self.fx_swirl.getFrame(0).get_width() / 2) + 10) + ouija_pos[0],
-        #       ((_char_data["pos"][1] -
-        #         self.fx_swirl.getFrame(0).get_height() / 2) + 10) + ouija_pos[1]
-        #   ))
-      elif (const.MOVE_MODE == 2):
-        self.entity.teleport(self.to)
+        for target_id in const.CHARACTERS[node_id]["nodes"]:
+          end_pos = const.CHARACTERS[target_id]["pos"]
+          end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
+          _start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
+                                       start_pos[1] + 24 + ouija_pos[1])
+          _end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
+                                     end_pos[1] + end_pos_offset[1] + ouija_pos[1])
+          _dur = random.uniform(50, 1000)
 
-    self.entity.draw(buffer, ouija_pos)
-    arg.client.send_message(
-        "/synth_coord", [self.entity.position.x / const.WIDTH, 1.0 - self.entity.position.y / const.HEIGHT])
+          fx_soul_moving_anim = self.soul_moving.getCopy()
+          fx_soul_moving_sprite = FXSprite(
+              fx_soul_moving_anim,
+              _start,
+              const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames
+          )
 
-    self.panel_input_msg_box_rect.width = self.textinput.surface.get_width()
-    self.panel_input_msg_box_rect.height = self.textinput.surface.get_height()
-    self.panel_input_msg_box_rect.x = (
-        (screen.get_width() / 2) - ouija_pos[0]) - 90
-    self.panel_input_msg_box_rect.y = screen.get_height() - ouija_pos[1]
+          fx_soul_moving_sprite.start()
+          fx_soul_moving_sprite.set_rotation_towards(_end)
 
-    _text_rect_input = self.panel_input_msg_box_rect
-    _text_rect_input.centerx = screen.get_width() // 2
-    _text_rect_input.centery = self.panel_input_msg_box_rect.y - 50
+          self.signals.append({
+              "start": _start,
+              "end": _end,
+              "start_time": current_time,
+              "duration": _dur,
+              "ease_x": CubicEaseOut(start=_start[0], end=_end[0], duration=_dur),
+              "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur),
+              "sprite": fx_soul_moving_sprite,
+              "target_id": target_id
+          })
 
-    if self.evaluating:
-      eval_bg_color = (0, 0, 0)
-      if self.eval_counter > 0:
-        self.eval_counter -= 1
-        blend_t = self.eval_counter / const.GLOW_DURATION_FRAMES
-        eval_bg_color = utils.blend_color((180, 0, 0), (0, 0, 0), 1 - blend_t)
+      self.activation_index += 1
+
+    new_signals = []
+    for sig in self.signals:
+      elapsed = current_time - sig["start_time"]
+      progress = elapsed / sig["duration"]
+
+      sig["sprite"].update(elapsed)
+
+      if progress < 1.0:
+        ease_x = sig["ease_x"].ease(elapsed)
+        ease_y = sig["ease_y"].ease(elapsed)
+
+        utils.draw_line_with_signal(
+            screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"])
+        new_signals.append(sig)
       else:
-        self.evaluating = False
-        self.eval_counter = const.GLOW_DURATION_FRAMES
-        eval_bg_color = (0, 0, 0)
-      pygame.draw.rect(buffer, eval_bg_color,
-                       _text_rect_input, width=0)
+        for node_id, data in const.CHARACTERS.items():
 
-    buffer.blit(self.textinput.surface,
-                (_text_rect_input.x, _text_rect_input.y))
-
-    # draw_nine_slice_scaled(
-    #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
-
-    screen.fill((0, 0, 0))
-    screen.blit(buffer, self.camera.offset)
-    utils.draw_nine_slice_scaled(
-        self.nine, screen, self.panel_rect, self.tile_size, 2)
-
-    # === Draw nodes and static connections ===
-    if const.ACTIVATE_NODES:
-      if self.activation_index < len(self.activation_order):
-        node_id = self.activation_order[self.activation_index]
-        # nodes[node_id]["activated"] = True
-        if const.CHARACTERS.get(node_id):
-          # print(f"Activating node: {node_id}")
-          start_pos = const.CHARACTERS[node_id]["pos"]
-
-          for target_id in const.CHARACTERS[node_id]["nodes"]:
-            end_pos = const.CHARACTERS[target_id]["pos"]
-            end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
-            _start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
-                                         start_pos[1] + 24 + ouija_pos[1])
-            _end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
-                                       end_pos[1] + end_pos_offset[1] + ouija_pos[1])
-            _dur = random.uniform(50, 1000)
-
-            fx_soul_moving_anim = self.soul_moving.getCopy()
-            fx_soul_moving_sprite = FXSprite(
-                fx_soul_moving_anim,
-                _start,
-                const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames
-            )
-
-            # self.all_fx_sprites.add(fx_soul_moving_sprite)
-            fx_soul_moving_sprite.start()
-            fx_soul_moving_sprite.set_rotation_towards(_end)
-
-            self.signals.append({
-                "start": _start,
-                "end": _end,
-                "start_time": current_time,
-                "duration": _dur,
-                "ease_x": CubicEaseOut(start=_start[0], end=_end[0], duration=_dur),
-                "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur),
-                "sprite": fx_soul_moving_sprite,
-                "target_id": target_id
-            })
-
-        self.activation_index += 1
-
-      new_signals = []
-      for sig in self.signals:
-        elapsed = current_time - sig["start_time"]
-        progress = elapsed / sig["duration"]
-
-        sig["sprite"].update(elapsed)
-        # self.all_fx_sprites.update(elapsed)
-        # self.all_fx_sprites.draw(screen)
-
-        if progress < 1.0:
-          ease_x = sig["ease_x"].ease(elapsed)
-          ease_y = sig["ease_y"].ease(elapsed)
-
-          utils.draw_line_with_signal(
-              screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"])
-          new_signals.append(sig)
-        else:
-          # Reached the target — light it up!
-          for node_id, data in const.CHARACTERS.items():
-
-            end_pos_offset = (22, -35) if node_id == "O" else (22, -20)
-            # revert offset to compare with const.CHARACTERS
-            end_sig_pos = (sig["end"][0] + end_pos_offset[0] + -ouija_pos[0],
-                           sig["end"][1] + end_pos_offset[1] + -ouija_pos[1])
-            if data["pos"] == end_sig_pos:
-              # data["activated"] = True
-              self.activation_order.append(node_id.upper())
-              # activation_index += 1
-              _fx_reach_anim = self.fx_reach.getCopy()
-              _fx_reach_sprite = FXSprite(_fx_reach_anim, pygame.Vector2(
-                ( data["pos"][0]+10 ) + ouija_pos[0], ( data["pos"][1] + 24 ) + ouija_pos[1]), 
+          end_pos_offset = (22, -35) if node_id == "O" else (22, -20)
+          end_sig_pos = (sig["end"][0] + end_pos_offset[0] + -ouija_pos[0],
+                         sig["end"][1] + end_pos_offset[1] + -ouija_pos[1])
+          if data["pos"] == end_sig_pos:
+            # data["activated"] = True
+            self.activation_order.append(node_id.upper())
+            # activation_index += 1
+            _fx_reach_anim = self.fx_reach.getCopy()
+            _fx_reach_sprite = FXSprite(_fx_reach_anim, pygame.Vector2(
+                (data["pos"][0]+10) + ouija_pos[0], (data["pos"][1] + 24) + ouija_pos[1]),
                 const.GLOW_DURATION_FRAMES * self.fx_reach.numFrames
-              )
-              _fx_reach_sprite.start()
-              self.all_sprites.add(_fx_reach_sprite)
+            )
+            _fx_reach_sprite.start()
+            self.all_sprites.add(_fx_reach_sprite)
 
-              if (const.TRIGGER_MODE):
-                arg.client.send_message("/synth_shot_nodes", [])
-              break
-      self.signals = new_signals
+            if (const.TRIGGER_MODE):
+              arg.client.send_message("/synth_shot_nodes", [])
+            break
+    self.signals = new_signals
 
 class TransitionScene(BaseScene):
   def __init__(self, fromScenes, toScenes):

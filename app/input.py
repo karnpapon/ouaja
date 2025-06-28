@@ -1,33 +1,32 @@
 import pygame
 
-# unused for now
 class Keyboard:
   def __init__(self):
-    self.currentKeyStates = None
-    self.previousKeyStates = None
+    self.current_key_states = None
+    self.previous_key_states = None
 
-  def processInput(self):
-    self.previousKeyStates = self.currentKeyStates
-    self.currentKeyStates = pygame.key.get_pressed()
+  def process_input(self):
+    self.previous_key_states = self.current_key_states
+    self.current_key_states = pygame.key.get_pressed()
 
-  def isKeyDown(self, keyCode):
-    if self.currentKeyStates is None or self.previousKeyStates is None:
+  def is_key_down(self, keyCode):
+    if self.current_key_states is None or self.previous_key_states is None:
       return False
-    return self.currentKeyStates[keyCode] == True
+    return self.current_key_states[keyCode] == True
 
-  def isKeyPressed(self, keyCode):
-    if self.currentKeyStates is None or self.previousKeyStates is None:
+  def is_key_pressed(self, keyCode):
+    if self.current_key_states is None or self.previous_key_states is None:
       return False
-    return self.currentKeyStates[keyCode] == True and self.previousKeyStates[keyCode] == False
+    return self.current_key_states[keyCode] == True and self.previous_key_states[keyCode] == False
 
-  def isKeyReleased(self, keyCode):
-    if self.currentKeyStates is None or self.previousKeyStates is None:
+  def is_key_released(self, keyCode):
+    if self.current_key_states is None or self.previous_key_states is None:
       return False
-    return self.currentKeyStates[keyCode] == False and self.previousKeyStates[keyCode] == True
+    return self.current_key_states[keyCode] == False and self.previous_key_states[keyCode] == True
 
 class InputStream:
   def __init__(self):
     self.keyboard = Keyboard()
 
-  def processInput(self):
-    self.keyboard.processInput()
+  def process_input(self):
+    self.keyboard.process_input()
