@@ -64,7 +64,7 @@ CHARACTERS = {
   'Q': {"pos": (707-8, 345 + -20), "nodes": ["L", "R", "X", "F"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'R': {"pos": (858, 345 + -20), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
 
-  'S': {"pos": (95-8, 401 + -20), "nodes": ["B", "H", "N", "T"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
+  'S': {"pos": (95-8, 401 + -20), "nodes": ["B", "H", "N", "T"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0), "operation": "shift"},
   'T': {"pos": (252-8, 401 + -16), "nodes": ["C", "I", "O", "U", "Y"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'U': {"pos": (405-12, 401 + -20), "nodes": ["J", "P", "V", "Z", "D"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'V': {"pos": (558-12, 401 + -20), "nodes": ["E", "K", "Q", "W"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
