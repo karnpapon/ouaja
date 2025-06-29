@@ -355,7 +355,7 @@ s.waitForBoot{
 
 	OSCdef(\shot_nodes, {
 		arg msg;
-		var freqs = [50,55.5,64.5,84.2,93.4,124.6, 281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835];
+		var freqs = [281.4, 312, 342.9, 381.2, 418.9, 461.9, 510, 564, 620, 684.3, 756.8, 835];
 
 		var weights = freqs.collect { |val|
 			if (val < 564) { 5 } { 1 }
@@ -366,6 +366,8 @@ s.waitForBoot{
 
 		var chosen = freqs.wchoose(normWeights);
 		var dr = [6,8, 2, 2.5, 3,3.25, 4.25].choose;
+
+		// msg.postln;
 
 		Synth("fm-gong", [
 			\freq, chosen,

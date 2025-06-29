@@ -41,7 +41,7 @@ def ask(question):
   text = f"{question}"
   response = ""
   if DEBUG:
-    response = "abcdefghijklmnopqrstuvwxyz" # s
+    response = "abcdefghijklmnopqrstuvwxyz" # s s
   else:
     response = conversation_with_summary.predict(input=text)
   states.reply_answer.put(response)
@@ -263,6 +263,7 @@ class GameScene(BaseScene):
     self.haunted_interval = 200  # ms
     self.haunted_rand_lower_bound = 50
     self.haunted_rand_upper_bound = 1000
+    self.looped_nodes = True
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -437,6 +438,7 @@ class GameScene(BaseScene):
         self.timeout = const.FPS * const.TIMEOUT_FACTOR
         self.current_answer = ""
         self.go_to_init_pos = False
+        self.looped_nodes = True
       else:
         if const.ACTIVATE_NODES:
           self.activation_order.append(self.answer[self.answer_index].upper())
@@ -623,8 +625,9 @@ class GameScene(BaseScene):
   def draw_nodes_and_connections(self, screen: pygame.Surface, ouija_pos: tuple[int, int], current_time: pygame.Surface):
     """ Draw the nodes and connections between them. """
     if self.activation_index < len(self.activation_order):
-      node_id = self.activation_order[self.activation_index]
+      node_id: str = self.activation_order[self.activation_index]
       # nodes[node_id]["activated"] = True
+      
       if const.CHARACTERS.get(node_id):
         start_pos = const.CHARACTERS[node_id]["pos"]
 
@@ -632,12 +635,22 @@ class GameScene(BaseScene):
         node_index = const.CHARACTERS[node_id]["node_index"]
         target_id = None
 
+        if node_id.isspace():
+          const.CHARACTERS["L"]["nodes"] = []
+          const.CHARACTERS["L"]["node_index"] = 0
+          self.looped_nodes = False
+
         if isinstance(node_target, list) and 0 <= node_index < len(node_target):
           target_id = node_target[node_index]
+
+          if target_id == "L" and self.looped_nodes:
+            const.CHARACTERS[target_id]["nodes"] = [node_id]
+            const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[target_id]["nodes"])
 
           if node_id == "S":
             const.CHARACTERS[target_id]["node_index"] += 1
             const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[node_id]["nodes"])
+          
           if node_id == "D":
             # TODO: DRY
             for target in node_target:
@@ -669,8 +682,6 @@ class GameScene(BaseScene):
                   "target_id": target,
                   "info_target_offset_pos": const.CHARACTERS[target]["offset_pos"]
               })
-              # return
-            # return
           else:
             end_pos = const.CHARACTERS[target_id]["pos"]
             end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
@@ -678,7 +689,7 @@ class GameScene(BaseScene):
                                         start_pos[1] + 24 + ouija_pos[1])
             _end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
                                       end_pos[1] + end_pos_offset[1] + ouija_pos[1])
-            _dur = random.uniform(50, 1000)
+            _dur = random.uniform(50, 400)
 
             fx_soul_moving_anim = self.soul_moving.getCopy()
             fx_soul_moving_sprite = FXSprite(
@@ -701,7 +712,6 @@ class GameScene(BaseScene):
                 "target_id": target_id,
                 "info_target_offset_pos": const.CHARACTERS[target_id]["offset_pos"]
             })
-
       self.activation_index += 1
 
     new_signals = []

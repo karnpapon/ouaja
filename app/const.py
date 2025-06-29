@@ -37,7 +37,7 @@ GLOW_MAX_ALPHA = 200
 GLOW_DURATION = 1  # seconds to fade out
 
 CHARACTERS = {
-  ' ': {"pos": (482-20, 482 + -26), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
+  ' ': {"operation": "space", "pos": (482-20, 482 + -26), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   '?': {"pos": (668-60, 70 + -20), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   '!': {"pos": (558 + 35, 70 + -20), "nodes": [],"node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
   # '*': {"pos": (482, 482 + -20), "nodes": []},
@@ -46,7 +46,7 @@ CHARACTERS = {
   'A': {"pos": (95  - 8, 234 + -26), "nodes": ["T", "H", "N"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'B': {"pos": (252 - 10, 234 + -26), "nodes": ["U", "Y", "I", "O"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
   'C': {"pos": (405 - 10, 234 + -26), "nodes": ["Z", "J", "P", "V"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
-  'D': {"operation": "distrubute", "pos": (558 - 10, 234 + -26), "nodes": ["W", "K", "Q"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
+  'D': {"operation": "distribute", "pos": (558 - 10, 234 + -26), "nodes": ["W", "K", "Q"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
   'E': {"pos": (707 - 8, 234 + -26), "nodes": ["X", "L", "R"],  "node_index": 0, "offset_pos": pygame.Vector2(0, 5)},
   'F': {"pos": (858, 234 + -20), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
 
@@ -55,7 +55,7 @@ CHARACTERS = {
   'I': {"pos": (405-8, 289 + -20), "nodes": ["V", "Z", "D", "J", "P"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'J': {"pos": (558-8, 289 + -26), "nodes": ["Q", "W", "E", "K"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'K': {"pos": (707-8, 289 + -20), "nodes": ["R", "X", "F", "L"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
-  'L': {"pos": (858, 289 + -20), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
+  'L': {"operation": "linger", "pos": (858, 289 + -20), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
 
   'M': {"pos": (95-12, 345 + -20), "nodes": ["H", "N", "T", "B"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'N': {"pos": (252-12, 345 + -20), "nodes": ["I", "O", "U", "Y", "C"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
