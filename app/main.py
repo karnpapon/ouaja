@@ -10,15 +10,18 @@ from .shaders import GraphicEngine
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 # os.environ['SDL_VIDEO_WINDOW_POS'] = '0, 0'
 
+DEBUG = os.getenv("DEBUG", False)
+
 def main():
   pygame.init()
   
-  # Set OpenGL context attributes for macOS compatibility
-  pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
-  pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-  pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
-  pygame.display.gl_set_attribute(pygame.GL_DOUBLEBUFFER, 1)
-  pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
+  if DEBUG:
+    # Set OpenGL context attributes for macOS compatibility
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
+    pygame.display.gl_set_attribute(pygame.GL_DOUBLEBUFFER, 1)
+    pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
   
   pygame.display.set_caption("-")
   pygame.mouse.set_visible(False) 

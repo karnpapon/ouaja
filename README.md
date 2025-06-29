@@ -16,13 +16,18 @@ NOTE: This tool is intended for live performance, So it's an audio-engine agnost
 
 ## usage
 
-- `cp .env.example .env`, to create `.env` from example
-- put your token in `.env`
-- put details or the `CONTEXT_CHARACTER` in `.env` (an example prompt is provided in `.env.example`)
-- `uv sync`
-- `source .venv/bin/activate`
-- `python main.py` default port is `57120`, if you wanted to configure the ip/port use eg. `python main.py --ip 127.0.0.1 --port 8080`
-- execute `sound-engine.scd` or your preferred audio engine.
+- Run `cp .env.example .env` to create a `.env` file from the example.
+- Add your `API token` to the `.env` file.
+- Add details or the `CONTEXT_CHARACTER` to `.env` (an example prompt is provided in `.env.example`).
+- Run `uv sync`.
+- Activate the virtual environment with `source .venv/bin/activate`.
+- Start the application with `python main.py`. The default port is `57120`; to configure the IP/port, use, for example, `python main.py --ip 127.0.0.1 --port 8080`.
+- OPTIONAL: If you do not have an `API Token` but want to see how it works, run `DEBUG=true python main.py` instead of `python main.py`.
+- Run `sound-engine.scd` or your preferred audio engine.
+
+
+## game usage
+- To enter the main screen, type the following sentence **exactly as shown**, including all spaces and punctuation: `Signal the trace. We are listening...`
 
 
 ## OSC Msg

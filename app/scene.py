@@ -8,6 +8,7 @@ import os
 import queue
 import threading
 from easing_functions import CubicEaseOut
+from typing import Any, Dict
 from . import states
 from . import const
 from . import utils
@@ -627,7 +628,17 @@ class GameScene(BaseScene):
       if const.CHARACTERS.get(node_id):
         start_pos = const.CHARACTERS[node_id]["pos"]
 
-        for target_id in const.CHARACTERS[node_id]["nodes"]:
+        node_target = const.CHARACTERS[node_id]["nodes"]
+        node_index = const.CHARACTERS[node_id]["node_index"]
+        target_id = None
+
+        if isinstance(node_target, list) and 0 <= node_index < len(node_target):
+          target_id = node_target[node_index]
+
+          if node_id == "S":
+            const.CHARACTERS[target_id]["node_index"] += 1
+            const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[node_id]["nodes"])
+
           end_pos = const.CHARACTERS[target_id]["pos"]
           end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
           _start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
