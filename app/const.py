@@ -46,7 +46,7 @@ CHARACTERS = {
   'A': {"pos": (95  - 8, 234 + -26), "nodes": ["T", "H", "N"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'B': {"pos": (252 - 10, 234 + -26), "nodes": ["U", "Y", "I", "O"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
   'C': {"pos": (405 - 10, 234 + -26), "nodes": ["Z", "J", "P", "V"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
-  'D': {"pos": (558 - 10, 234 + -26), "nodes": ["W", "K", "Q"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
+  'D': {"operation": "distrubute", "pos": (558 - 10, 234 + -26), "nodes": ["W", "K", "Q"], "node_index": 0,  "offset_pos": pygame.Vector2(0, 0)},
   'E': {"pos": (707 - 8, 234 + -26), "nodes": ["X", "L", "R"],  "node_index": 0, "offset_pos": pygame.Vector2(0, 5)},
   'F': {"pos": (858, 234 + -20), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
 
@@ -64,7 +64,7 @@ CHARACTERS = {
   'Q': {"pos": (707-8, 345 + -20), "nodes": ["L", "R", "X", "F"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'R': {"pos": (858, 345 + -20), "nodes": [], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
 
-  'S': {"pos": (95-8, 401 + -20), "nodes": ["B", "H", "N", "T"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0), "operation": "shift"},
+  'S': {"operation": "shift", "pos": (95-8, 401 + -20), "nodes": ["B", "H", "N", "T"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'T': {"pos": (252-8, 401 + -16), "nodes": ["C", "I", "O", "U", "Y"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'U': {"pos": (405-12, 401 + -20), "nodes": ["J", "P", "V", "Z", "D"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
   'V': {"pos": (558-12, 401 + -20), "nodes": ["E", "K", "Q", "W"], "node_index": 0, "offset_pos": pygame.Vector2(0, 0)},
