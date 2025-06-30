@@ -263,7 +263,6 @@ class GameScene(BaseScene):
     self.haunted_interval = 200  # ms
     self.haunted_rand_lower_bound = 50
     self.haunted_rand_upper_bound = 1000
-    self.looped_nodes = True
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -438,7 +437,6 @@ class GameScene(BaseScene):
         self.timeout = const.FPS * const.TIMEOUT_FACTOR
         self.current_answer = ""
         self.go_to_init_pos = False
-        self.looped_nodes = True
       else:
         if const.ACTIVATE_NODES:
           self.activation_order.append(self.answer[self.answer_index].upper())
@@ -621,29 +619,58 @@ class GameScene(BaseScene):
     _text_rect.centery = 148+ouija_pos[1]
 
     buffer.blit(ghost_msg, _text_rect)
+  
+  def draw_parent_and_child_nodes(self, parent_node, child_node, ouija_pos, current_time):
+    start_pos = const.CHARACTERS[parent_node]["pos"]
+    end_pos = const.CHARACTERS[child_node]["pos"]
+    end_pos_offset = (-22, 35) if child_node == "O" else (-22, 20)
+    start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
+                                start_pos[1] + 24 + ouija_pos[1])
+    end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
+                              end_pos[1] + end_pos_offset[1] + ouija_pos[1])
+    dur = random.uniform(50, 400)
+
+    fx_soul_moving_anim = self.soul_moving.getCopy()
+    fx_soul_moving_sprite = FXSprite(
+        fx_soul_moving_anim,
+        start,
+        const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames
+    )
+
+    fx_soul_moving_sprite.start()
+    fx_soul_moving_sprite.set_rotation_towards(end)
+    self.signals.append({
+        "start": start,
+        "end": end,
+        "start_time": current_time,
+        "duration": dur,
+        "ease_x": CubicEaseOut(start=start[0], end=end[0], duration=dur),
+        "ease_y": CubicEaseOut(start=start[1], end=end[1], duration=dur),
+        "sprite": fx_soul_moving_sprite,
+        "target_id": child_node,
+        "info_target_offset_pos": const.CHARACTERS[child_node]["offset_pos"]
+    })
 
   def draw_nodes_and_connections(self, screen: pygame.Surface, ouija_pos: tuple[int, int], current_time: pygame.Surface):
     """ Draw the nodes and connections between them. """
     if self.activation_index < len(self.activation_order):
       node_id: str = self.activation_order[self.activation_index]
       # nodes[node_id]["activated"] = True
-      
       if const.CHARACTERS.get(node_id):
-        start_pos = const.CHARACTERS[node_id]["pos"]
-
+        
         node_target = const.CHARACTERS[node_id]["nodes"]
         node_index = const.CHARACTERS[node_id]["node_index"]
         target_id = None
-
+        
         if node_id.isspace():
           const.CHARACTERS["L"]["nodes"] = []
           const.CHARACTERS["L"]["node_index"] = 0
-          self.looped_nodes = False
+          self.signals = []
 
         if isinstance(node_target, list) and 0 <= node_index < len(node_target):
           target_id = node_target[node_index]
 
-          if target_id == "L" and self.looped_nodes:
+          if target_id == "L":
             const.CHARACTERS[target_id]["nodes"] = [node_id]
             const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[target_id]["nodes"])
 
@@ -652,66 +679,10 @@ class GameScene(BaseScene):
             const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[node_id]["nodes"])
           
           if node_id == "D":
-            # TODO: DRY
             for target in node_target:
-              end_pos = const.CHARACTERS[target]["pos"]
-              end_pos_offset = (-22, 35) if target == "O" else (-22, 20)
-              _start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
-                                          start_pos[1] + 24 + ouija_pos[1])
-              _end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
-                                        end_pos[1] + end_pos_offset[1] + ouija_pos[1])
-              _dur = random.uniform(50, 1000)
-
-              fx_soul_moving_anim = self.soul_moving.getCopy()
-              fx_soul_moving_sprite = FXSprite(
-                  fx_soul_moving_anim,
-                  _start,
-                  const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames
-              )
-
-              fx_soul_moving_sprite.start()
-              fx_soul_moving_sprite.set_rotation_towards(_end)
-              self.signals.append({
-                  "start": _start,
-                  "end": _end,
-                  "start_time": current_time,
-                  "duration": _dur,
-                  "ease_x": CubicEaseOut(start=_start[0], end=_end[0], duration=_dur),
-                  "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur),
-                  "sprite": fx_soul_moving_sprite,
-                  "target_id": target,
-                  "info_target_offset_pos": const.CHARACTERS[target]["offset_pos"]
-              })
+              self.draw_parent_and_child_nodes(node_id, target, ouija_pos, current_time) 
           else:
-            end_pos = const.CHARACTERS[target_id]["pos"]
-            end_pos_offset = (-22, 35) if target_id == "O" else (-22, 20)
-            _start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
-                                        start_pos[1] + 24 + ouija_pos[1])
-            _end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
-                                      end_pos[1] + end_pos_offset[1] + ouija_pos[1])
-            _dur = random.uniform(50, 400)
-
-            fx_soul_moving_anim = self.soul_moving.getCopy()
-            fx_soul_moving_sprite = FXSprite(
-                fx_soul_moving_anim,
-                _start,
-                const.GLOW_DURATION_FRAMES * self.soul_moving.numFrames
-            )
-
-            fx_soul_moving_sprite.start()
-            fx_soul_moving_sprite.set_rotation_towards(_end)
-
-            self.signals.append({
-                "start": _start,
-                "end": _end,
-                "start_time": current_time,
-                "duration": _dur,
-                "ease_x": CubicEaseOut(start=_start[0], end=_end[0], duration=_dur),
-                "ease_y": CubicEaseOut(start=_start[1], end=_end[1], duration=_dur),
-                "sprite": fx_soul_moving_sprite,
-                "target_id": target_id,
-                "info_target_offset_pos": const.CHARACTERS[target_id]["offset_pos"]
-            })
+            self.draw_parent_and_child_nodes(node_id, target_id,  ouija_pos, current_time) 
       self.activation_index += 1
 
     new_signals = []
