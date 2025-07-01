@@ -1,6 +1,8 @@
 import pygame
 import numpy as np
 from .sprite import FXSprite
+from .line import GradientLine
+from .const import BG_COLOR, TEXT_COLOR
 
 def clamp(minimum, x, maximum):
   return max(minimum, min(x, maximum))
@@ -176,7 +178,9 @@ def blend_color(start_color, end_color, t):
   return tuple(int(start + (end - start) * t) for start, end in zip(start_color, end_color))
 
 def draw_line_with_signal(sc: pygame.Surface, start, end, progress, sprite: FXSprite, target_offset_pos):
-  pygame.draw.line(sc, (255, 255, 255), start, end + target_offset_pos, 4)
+  # pygame.draw.line(sc, (255, 255, 255), start, end + target_offset_pos, 4)
+  if not sprite: 
+    return
   if 0 <= progress <= 1:
     x = start[0] + (end[0] - start[0]) * progress
     y = start[1] + (end[1] - start[1]) * progress

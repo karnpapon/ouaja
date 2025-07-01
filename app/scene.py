@@ -18,6 +18,7 @@ from .entity import Entity
 from .camera import Camera
 from .sprite import FXSprite, SpriteSheet, AnimationFactory
 from .model import conversation_with_summary
+from .line import GradientLine
 
 response = None
 fetching = False
@@ -368,9 +369,9 @@ class GameScene(BaseScene):
     self.eval_counter = const.GLOW_DURATION_FRAMES
     self.letters = "?ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 "
     self.bg = pygame.image.load(
-        "assets/imgs/network-red-filled-layer-1-pixelated.png")
+        "assets/imgs/network-red-filled-layer-1-pixelated.png").convert_alpha()
     self.bg2 = pygame.image.load(
-        "assets/imgs/network-red-filled-layer-2-alt.png")
+        "assets/imgs/network-red-filled-layer-2-alt.png").convert_alpha()
 
     self.activation_order = []
     self.activation_index = 0
@@ -623,11 +624,12 @@ class GameScene(BaseScene):
   def draw_parent_and_child_nodes(self, parent_node, child_node, ouija_pos, current_time):
     start_pos = const.CHARACTERS[parent_node]["pos"]
     end_pos = const.CHARACTERS[child_node]["pos"]
-    end_pos_offset = (-22, 35) if child_node == "O" else (-22, 20)
-    start = pygame.math.Vector2(start_pos[0] + 35 + ouija_pos[0],
-                                start_pos[1] + 24 + ouija_pos[1])
-    end = pygame.math.Vector2(end_pos[0] + end_pos_offset[0] + ouija_pos[0],
-                              end_pos[1] + end_pos_offset[1] + ouija_pos[1])
+    start_offset: pygame.Vector2 = const.CHARACTERS[parent_node]["offset_pos_from"]
+    end_offset: pygame.Vector2 = const.CHARACTERS[child_node]["offset_pos_to"]
+    start = pygame.math.Vector2(start_pos[0] + (start_offset.x) + ouija_pos[0],
+                                start_pos[1] + start_offset.y + ouija_pos[1])
+    end = pygame.math.Vector2(end_pos[0] + (-end_offset.y) + ouija_pos[0],
+                              end_pos[1] + end_offset.x + ouija_pos[1])
     dur = random.uniform(50, 400)
 
     fx_soul_moving_anim = self.soul_moving.getCopy()
@@ -639,16 +641,19 @@ class GameScene(BaseScene):
 
     fx_soul_moving_sprite.start()
     fx_soul_moving_sprite.set_rotation_towards(end)
+    ease_x = CubicEaseOut(start=start[0], end=end[0], duration=dur)
+    ease_y = CubicEaseOut(start=start[1], end=end[1], duration=dur)
     self.signals.append({
         "start": start,
         "end": end,
         "start_time": current_time,
         "duration": dur,
-        "ease_x": CubicEaseOut(start=start[0], end=end[0], duration=dur),
-        "ease_y": CubicEaseOut(start=start[1], end=end[1], duration=dur),
+        "ease_x": ease_x,
+        "ease_y": ease_y,
         "sprite": fx_soul_moving_sprite,
         "target_id": child_node,
-        "info_target_offset_pos": const.CHARACTERS[child_node]["offset_pos"]
+        "info_target_offset_pos": const.CHARACTERS[child_node]["offset_pos_to"],
+        "line": GradientLine( start, end,  const.TEXT_LIGHTEST_COLOR,  const.TEXT_COLOR, 5 )
     })
 
   def draw_nodes_and_connections(self, screen: pygame.Surface, ouija_pos: tuple[int, int], current_time: pygame.Surface):
@@ -690,11 +695,14 @@ class GameScene(BaseScene):
       elapsed = current_time - sig["start_time"]
       progress = elapsed / sig["duration"]
 
-      sig["sprite"].update(elapsed)
+      if sig["sprite"]:
+        sig["sprite"].update(elapsed)
 
       if progress < 1.0:
         ease_x = sig["ease_x"].ease(elapsed)
         ease_y = sig["ease_y"].ease(elapsed)
+
+        sig["line"].draw(screen)
 
         utils.draw_line_with_signal(
             screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"], sig["info_target_offset_pos"])
@@ -702,9 +710,8 @@ class GameScene(BaseScene):
       else:
         for node_id, data in const.CHARACTERS.items():
 
-          end_pos_offset = (22, -35) if node_id == "O" else (22, -20)
-          end_sig_pos = (sig["end"][0] + end_pos_offset[0] + -ouija_pos[0],
-                         sig["end"][1] + end_pos_offset[1] + -ouija_pos[1])
+          end_sig_pos = (sig["end"][0] + sig["info_target_offset_pos"].y + -ouija_pos[0],
+                         sig["end"][1] + (-sig["info_target_offset_pos"].x) + -ouija_pos[1])
           if data["pos"] == end_sig_pos:
             # data["activated"] = True
             self.activation_order.append(node_id.upper())
