@@ -553,8 +553,9 @@ class GameScene(BaseScene):
 
     screen.fill((0, 0, 0))
     screen.blit(buffer, self.camera.offset)
-    utils.draw_nine_slice_scaled(
-        self.nine, screen, self.panel_rect, self.tile_size, 2)
+    if DEBUG:
+      utils.draw_nine_slice_scaled(
+          self.nine, screen, self.panel_rect, self.tile_size, 2)
 
     if const.ACTIVATE_NODES:
       self.draw_nodes_and_connections(screen, ouija_pos, current_time)
@@ -660,15 +661,15 @@ class GameScene(BaseScene):
     """ Draw the nodes and connections between them. """
     if self.activation_index < len(self.activation_order):
       node_id: str = self.activation_order[self.activation_index]
-      # nodes[node_id]["activated"] = True
+      # right_nodes[node_id]["activated"] = True
       if const.CHARACTERS.get(node_id):
         
-        node_target = const.CHARACTERS[node_id]["nodes"]
+        node_target = const.CHARACTERS[node_id]["right_nodes"]
         node_index = const.CHARACTERS[node_id]["node_index"]
         target_id = None
         
         if node_id.isspace():
-          const.CHARACTERS["L"]["nodes"] = []
+          const.CHARACTERS["L"]["right_nodes"] = []
           const.CHARACTERS["L"]["node_index"] = 0
           self.signals = []
 
@@ -676,12 +677,13 @@ class GameScene(BaseScene):
           target_id = node_target[node_index]
 
           if target_id == "L":
-            const.CHARACTERS[target_id]["nodes"] = [node_id]
-            const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[target_id]["nodes"])
+            const.CHARACTERS["L"]["right_nodes"] = [node_id]
+            const.CHARACTERS["L"]["node_index"] %= len(const.CHARACTERS[target_id]["right_nodes"])
+            const.CHARACTERS[node_id]["direction"] = -1
 
           if node_id == "S":
             const.CHARACTERS[target_id]["node_index"] += 1
-            const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[node_id]["nodes"])
+            const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[node_id]["right_nodes"])
           
           if node_id == "D":
             for target in node_target:
