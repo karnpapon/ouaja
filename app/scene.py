@@ -7,6 +7,7 @@ import random
 import os
 import queue
 import threading
+import datetime as dt
 from easing_functions import CubicEaseOut
 from typing import Any, Dict
 from . import states
@@ -19,6 +20,7 @@ from .camera import Camera
 from .sprite import FXSprite, SpriteSheet, AnimationFactory
 from .model import conversation_with_summary
 from .line import GradientLine
+from .firefly import Firefly
 
 response = None
 fetching = False
@@ -42,7 +44,7 @@ def ask(question):
   text = f"{question}"
   response = ""
   if DEBUG:
-    response = "abcdefghijklmnopqrstuvwxyz" # s s
+    response = "abcdefghijklmnopqrstuvwxyz " # s s
   else:
     response = conversation_with_summary.predict(input=text)
   states.reply_answer.put(response)
@@ -264,6 +266,8 @@ class GameScene(BaseScene):
     self.haunted_interval = 200  # ms
     self.haunted_rand_lower_bound = 50
     self.haunted_rand_upper_bound = 1000
+    self.fireflies = [Firefly(pygame.display.get_window_size()[0], pygame.display.get_window_size()[1]) for i in range(const.NUM_FIREFLIES)]
+    self.start_time = dt.datetime.now()
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -412,6 +416,8 @@ class GameScene(BaseScene):
 
   def draw(self, sm, screen: pygame.Surface):
     current_time = pygame.time.get_ticks()
+    # time_elapsed = (dt.datetime.now() - self.start_time).total_seconds()
+    # delta_t = current_time
     try:
       reply = states.reply_answer.get(False)
     except queue.Empty:
@@ -559,6 +565,11 @@ class GameScene(BaseScene):
 
     if const.ACTIVATE_NODES:
       self.draw_nodes_and_connections(screen, ouija_pos, current_time)
+    
+    # for firefly in self.fireflies:
+    #   firefly.update_radius(time_elapsed, 2)
+    #   firefly.update_pos_rng(time_elapsed, 0.0001, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
+    #   firefly.draw(screen, time_elapsed)
 
   def draw_text_input(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface):
     """ Draw the text input box for user input. """
@@ -622,7 +633,7 @@ class GameScene(BaseScene):
 
     buffer.blit(ghost_msg, _text_rect)
   
-  def draw_parent_and_child_nodes(self, parent_node, child_node, ouija_pos, current_time):
+  def draw_head_and_next_node(self, parent_node, child_node, ouija_pos, current_time):
     start_pos = const.CHARACTERS[parent_node]["pos"]
     end_pos = const.CHARACTERS[child_node]["pos"]
     start_offset: pygame.Vector2 = const.CHARACTERS[parent_node]["offset_pos_from"]
@@ -659,37 +670,46 @@ class GameScene(BaseScene):
 
   def draw_nodes_and_connections(self, screen: pygame.Surface, ouija_pos: tuple[int, int], current_time: pygame.Surface):
     """ Draw the nodes and connections between them. """
+    # prev_node_head = None
     if self.activation_index < len(self.activation_order):
       node_id: str = self.activation_order[self.activation_index]
-      # right_nodes[node_id]["activated"] = True
       if const.CHARACTERS.get(node_id):
-        
-        node_target = const.CHARACTERS[node_id]["right_nodes"]
-        node_index = const.CHARACTERS[node_id]["node_index"]
-        target_id = None
+        node_head =  const.CHARACTERS[node_id]
+        node_next = node_head["right_nodes"] if node_head["direction"] == 1 else node_head["left_nodes"]
+        node_index = node_head["node_index"]
+        node_next_id = None
+
+        # if prev_node_head:
+        #   const.CHARACTERS[prev_node_head]["direction"] *= node_head["direction"]
         
         if node_id.isspace():
-          const.CHARACTERS["L"]["right_nodes"] = []
-          const.CHARACTERS["L"]["node_index"] = 0
           self.signals = []
+          # const.CHARACTERS["L"]["right_nodes"] = []
+          # const.CHARACTERS["L"]["node_index"] = 0
 
-        if isinstance(node_target, list) and 0 <= node_index < len(node_target):
-          target_id = node_target[node_index]
-
-          if target_id == "L":
-            const.CHARACTERS["L"]["right_nodes"] = [node_id]
-            const.CHARACTERS["L"]["node_index"] %= len(const.CHARACTERS[target_id]["right_nodes"])
-            const.CHARACTERS[node_id]["direction"] = -1
-
+        if isinstance(node_next, list) and 0 <= node_index < len(node_next):
+          node_next_id = node_next[node_index]
+          if node_next_id == "L":
+            # const.CHARACTERS[node_next_id]["node_index"] %= len( const.CHARACTERS[node_next_id]["left_nodes"])
+            const.CHARACTERS[node_next_id]["direction"] = -1
+            node_head["direction"] = -1          
+            
           if node_id == "S":
-            const.CHARACTERS[target_id]["node_index"] += 1
-            const.CHARACTERS[target_id]["node_index"] %= len(const.CHARACTERS[node_id]["right_nodes"])
+            const.CHARACTERS[node_next_id]["node_index"] += 1
+            const.CHARACTERS[node_next_id]["node_index"] %= len(node_head["right_nodes"])
+
+          if not node_next_id == "L":
+            const.CHARACTERS[node_next_id]["direction"] = node_head["direction"]
+            if utils.is_leave_node(const.CHARACTERS[node_next_id]):
+              const.CHARACTERS[node_next_id]["direction"] = 1
           
           if node_id == "D":
-            for target in node_target:
-              self.draw_parent_and_child_nodes(node_id, target, ouija_pos, current_time) 
+            for target in node_next:
+              self.draw_head_and_next_node(node_id, target, ouija_pos, current_time) 
           else:
-            self.draw_parent_and_child_nodes(node_id, target_id,  ouija_pos, current_time) 
+            self.draw_head_and_next_node(node_id, node_next_id,  ouija_pos, current_time)
+
+          # prev_node_head = node_id
       self.activation_index += 1
 
     new_signals = []

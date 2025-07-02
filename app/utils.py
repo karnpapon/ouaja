@@ -187,3 +187,6 @@ def draw_line_with_signal(sc: pygame.Surface, start, end, progress, sprite: FXSp
     # sprite.position = (int(x - (sprite.image.get_width()/2 ) - 5), int(y - (sprite.image.get_height()/2 ) - 5))
     # pygame.draw.circle(sc, (255, 255, 255), (int(x), int(y)), 8)
     sc.blit(sprite.image, (int(x - (sprite.image.get_width()/2 )), int(y - (sprite.image.get_height()/2 ))))
+
+def is_leave_node(node):
+  return (len(node["right_nodes"]) == 0 or len(node["left_nodes"]) == 0)
