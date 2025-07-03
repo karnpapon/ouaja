@@ -239,7 +239,7 @@ class GameScene(BaseScene):
 
     smoke_moving_anim_factory = AnimationFactory(smoke_sheet_2)
     smoke_moving_sprite = smoke_moving_anim_factory.create_animation_strip(
-        0, 1*64, 64, 64, 12, duration=0.05, spacing=0, scale=2.8, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
+        0, 1*64, 64, 64, 12, duration=0.05, spacing=0, scale=3.4, tint_color=const.TEXT_LIGHTEST_COLOR, loop=True)
 
     smoke_moving_reach_anim_factory = AnimationFactory(smoke_sheet_2)
     smoke_moving_reach_sprite = smoke_moving_reach_anim_factory.create_animation_strip(
@@ -268,6 +268,7 @@ class GameScene(BaseScene):
     self.haunted_rand_upper_bound = 1000
     self.fireflies = [Firefly(pygame.display.get_window_size()[0], pygame.display.get_window_size()[1]) for i in range(const.NUM_FIREFLIES)]
     self.start_time = dt.datetime.now()
+    self.prev_node_head = None
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -374,8 +375,12 @@ class GameScene(BaseScene):
     self.letters = "?ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 "
     self.bg = pygame.image.load(
         "assets/imgs/network-red-filled-layer-1-pixelated.png").convert_alpha()
+    self.bg_inv = pygame.image.load(
+        "assets/imgs/network-red-filled-layer-1-pixelated-invert.png").convert_alpha()
     self.bg2 = pygame.image.load(
         "assets/imgs/network-red-filled-layer-2-alt.png").convert_alpha()
+    self.bg2_inv = pygame.image.load(
+        "assets/imgs/network-red-filled-layer-2-alt-invert.png").convert_alpha()
 
     self.activation_order = []
     self.activation_index = 0
@@ -416,7 +421,7 @@ class GameScene(BaseScene):
 
   def draw(self, sm, screen: pygame.Surface):
     current_time = pygame.time.get_ticks()
-    # time_elapsed = (dt.datetime.now() - self.start_time).total_seconds()
+    time_elapsed = (dt.datetime.now() - self.start_time).total_seconds()
     # delta_t = current_time
     try:
       reply = states.reply_answer.get(False)
@@ -487,16 +492,27 @@ class GameScene(BaseScene):
         else:
           self.go_to_init_pos = True
 
-    if self.glow_frame_counter > 0:
+    if self.glow_frame_counter > (const.GLOW_DURATION_FRAMES - 12):
+    # if self.glow_frame_counter > 0:
       self.glow_frame_counter -= 1
-      blend_t = self.glow_frame_counter / const.GLOW_DURATION_FRAMES
-      bg_color = utils.blend_color((150, 0, 0), (0, 0, 0), 1 - blend_t)
+      # blend_t = self.glow_frame_counter / const.GLOW_DURATION_FRAMES
+      trigger = {
+        "bg_color": (255, 0, 0), # utils.blend_color((150, 0, 0), (0, 0, 0), 1 - blend_t),
+        "text_color": (0,0,0),
+        "bg": self.bg_inv, 
+        "bg2": self.bg2_inv
+      }
     else:
-      bg_color = (0, 0, 0)
+      trigger = {
+        "bg_color": (0, 0, 0),
+        "text_color": (255,0,0),
+        "bg": self.bg, 
+        "bg2": self.bg2
+      }
 
-    buffer.fill(bg_color)
-    buffer.blit(self.bg2, (0+ouija_pos[0], 0+ouija_pos[1]))
-    buffer.blit(self.bg, (0+ouija_pos[0], 0+ouija_pos[1]))
+    buffer.fill(trigger["bg_color"])
+    buffer.blit(trigger["bg2"], (0+ouija_pos[0], 0+ouija_pos[1]))
+    buffer.blit(trigger["bg"], (0+ouija_pos[0], 0+ouija_pos[1]))
 
     if (const.HAUNTED_MODE and current_time - self.haunted_last_call_time >= self.haunted_interval):
       self.to = pygame.math.Vector2(
@@ -539,7 +555,7 @@ class GameScene(BaseScene):
       # self.current_answer = ""
       self.timeout = const.FPS * const.TIMEOUT_FACTOR
 
-    self.draw_board(screen, ouija_pos, buffer)
+    self.draw_board(screen, ouija_pos, buffer, trigger)
 
     # if (self.glow_frame_counter > 0):
     self.all_sprites.update(self.glow_frame_counter)
@@ -568,7 +584,7 @@ class GameScene(BaseScene):
     
     # for firefly in self.fireflies:
     #   firefly.update_radius(time_elapsed, 2)
-    #   firefly.update_pos_rng(time_elapsed, 0.0001, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
+    #   firefly.update_pos_firefly(time_elapsed, 0.02, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
     #   firefly.draw(screen, time_elapsed)
 
   def draw_text_input(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface):
@@ -601,19 +617,19 @@ class GameScene(BaseScene):
     # draw_nine_slice_scaled(
     #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
 
-  def draw_board(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface):
+  def draw_board(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface, trigger_color: dict[str, Any]):
     """ Draw the ghost board with letters and messages. """
     ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 74)
-    ghost_msg = ghost_msg.render(str(self.current_answer), True, const.RED)
+    ghost_msg = ghost_msg.render(str(self.current_answer), True, trigger_color["text_color"])
 
     # Draw "YES" and "NO"
-    yes_text = self.font.render("Yes", True, const.TEXT_COLOR)
-    no_text = self.font.render("No", True, const.TEXT_COLOR)
+    yes_text = self.font.render("Yes", True, trigger_color["text_color"])
+    no_text = self.font.render("No", True, trigger_color["text_color"])
     buffer.blit(yes_text, (70+ouija_pos[0], 50+ouija_pos[1]))
     buffer.blit(no_text, (240+ouija_pos[0], 50+ouija_pos[1]))
 
     # Draw "GOODBYE"
-    goodbye_text = self.font.render("Goodbye", True, const.TEXT_COLOR)
+    goodbye_text = self.font.render("Goodbye", True, trigger_color["text_color"])
     buffer.blit(goodbye_text, (700+ouija_pos[0], 50 + ouija_pos[1]))
 
     for _, letter in enumerate(self.letters):
@@ -621,7 +637,7 @@ class GameScene(BaseScene):
         display_letter = "(  )"
       else:
         display_letter = letter.lower() if letter.isalpha() else letter
-      color = const.BG_COLOR if display_letter.isalpha() else const.TEXT_COLOR
+      color = trigger_color["bg_color"] if display_letter.isalpha() else trigger_color["text_color"]
       text = self.small_font.render(f"{display_letter}", True, color)
       pos = [const.CHARACTERS[letter]["pos"][0] + ouija_pos[0],
              const.CHARACTERS[letter]["pos"][1] + ouija_pos[1]]
@@ -670,28 +686,26 @@ class GameScene(BaseScene):
 
   def draw_nodes_and_connections(self, screen: pygame.Surface, ouija_pos: tuple[int, int], current_time: pygame.Surface):
     """ Draw the nodes and connections between them. """
-    # prev_node_head = None
     if self.activation_index < len(self.activation_order):
       node_id: str = self.activation_order[self.activation_index]
+
       if const.CHARACTERS.get(node_id):
         node_head =  const.CHARACTERS[node_id]
         node_next = node_head["right_nodes"] if node_head["direction"] == 1 else node_head["left_nodes"]
         node_index = node_head["node_index"]
         node_next_id = None
 
-        # if prev_node_head:
-        #   const.CHARACTERS[prev_node_head]["direction"] *= node_head["direction"]
-        
         if node_id.isspace():
           self.signals = []
-          # const.CHARACTERS["L"]["right_nodes"] = []
-          # const.CHARACTERS["L"]["node_index"] = 0
 
         if isinstance(node_next, list) and 0 <= node_index < len(node_next):
           node_next_id = node_next[node_index]
+
+          # restore direction
+          if self.prev_node_head and not utils.is_leave_node(const.CHARACTERS[self.prev_node_head]):
+            const.CHARACTERS[self.prev_node_head]["direction"] = 1
+
           if node_next_id == "L":
-            # const.CHARACTERS[node_next_id]["node_index"] %= len( const.CHARACTERS[node_next_id]["left_nodes"])
-            const.CHARACTERS[node_next_id]["direction"] = -1
             node_head["direction"] = -1          
             
           if node_id == "S":
@@ -708,8 +722,7 @@ class GameScene(BaseScene):
               self.draw_head_and_next_node(node_id, target, ouija_pos, current_time) 
           else:
             self.draw_head_and_next_node(node_id, node_next_id,  ouija_pos, current_time)
-
-          # prev_node_head = node_id
+          self.prev_node_head = node_id
       self.activation_index += 1
 
     new_signals = []
@@ -725,6 +738,8 @@ class GameScene(BaseScene):
         ease_y = sig["ease_y"].ease(elapsed)
 
         sig["line"].draw(screen)
+
+        arg.client.send_message("/synth_shot_node_line", [ease_x/pygame.display.get_window_size()[0], ease_y/pygame.display.get_window_size()[1]])
 
         utils.draw_line_with_signal(
             screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"], sig["info_target_offset_pos"])

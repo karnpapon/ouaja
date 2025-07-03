@@ -30,6 +30,7 @@ def main():
 
   scene_manager = SceneManager()
   intro_scene = IntroScene()
+  # game_scene = GameScene()
   scene_manager.push(intro_scene)
 
   # crt_shader = GraphicEngine(screen, VIRTUAL_RES=(pygame.display.get_window_size()[0], pygame.display.get_window_size()[1]), style=1, fullscreen=True)

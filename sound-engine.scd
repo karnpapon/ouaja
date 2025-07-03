@@ -378,9 +378,9 @@ s.waitForBoot{
 		], target: ~srcMixerChannel.asTarget);
 	}, '/synth_shot_nodes');
 
-	/*OSCdef(\shot_nodes, {
+	OSCdef(\shot_nodes, {
 	arg msg;
-	b.playRandom;
-	}, '/synth_shot_nodes');*/
+		// msg.postln;
+	}, '/synth_shot_node_line');
 };
 )

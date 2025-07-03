@@ -3,7 +3,7 @@ import pygame
 WIDTH = 960
 HEIGHT = 640
 
-NUM_FIREFLIES = 50
+NUM_FIREFLIES = 10
 
 USER = "Person:"
 PROMPT_TEXT = "GHOST"
@@ -58,7 +58,7 @@ CHARACTERS = {
   'I': {"pos": (397, 269), "right_nodes": ["V", "Z", "D", "J", "P"], "left_nodes": ["N", "T", "B", "H"],"node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(20, 22), "offset_pos_from": pygame.Vector2(35, 22)},
   'J': {"pos": (550, 263), "right_nodes": ["Q", "W", "E", "K"], "left_nodes": ["U", "Y", "C", "I", "O"], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(20, -10), "offset_pos_from": pygame.Vector2(35, 26)},
   'K': {"pos": (699, 269), "right_nodes": ["R", "X", "F", "L"], "left_nodes": ["P", "V", "Z", "D", "J"], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(20, 22), "offset_pos_from": pygame.Vector2(35, 16)},
-  'L': {"operation": "linger", "pos": (858, 269), "right_nodes": [], "left_nodes": ["Q", "W", "E", "K"], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(15, 16), "offset_pos_from": pygame.Vector2(-22, 16)},
+  'L': {"operation": "linger", "pos": (858, 269), "right_nodes": [], "left_nodes": ["Q", "W", "E", "K"], "node_index": 0, "direction": -1, "offset_pos_to": pygame.Vector2(15, 16), "offset_pos_from": pygame.Vector2(-22, 16)},
 
   'M': {"pos": (83, 325), "right_nodes": ["H", "N", "T", "B"], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(35, 6), "offset_pos_from": pygame.Vector2(35, 22)},
   'N': {"pos": (240, 325), "right_nodes": ["I", "O", "U", "Y", "C"], "left_nodes": ["G", "M", "S", "A"], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(25, 10), "offset_pos_from": pygame.Vector2(35, 22)},
