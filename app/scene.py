@@ -47,7 +47,7 @@ def ask(question):
   text = f"{question}"
   response = ""
   if DEBUG:
-    response = "abcdefghijklmnopqrstuvwxyz " # s s
+    response = "i'm not a human"  # "abcdefghijklmnopqrstuvwxyz " # s s
   else:
     response = conversation_with_summary.predict(input=text)
   states.reply_answer.put(response)
@@ -87,7 +87,7 @@ class SceneManager:
   def draw(self, screen):
     if len(self.scenes) > 0:
       self.scenes[-1].draw(self, screen)
-    pygame.display.flip() # comment this line if you want to use shaders
+    pygame.display.flip()  # comment this line if you want to use shaders
 
   def push(self, scene):
     self.exit_scene()
@@ -156,7 +156,7 @@ class IntroScene(BaseScene):
     shadow_img = pygame.image.load("assets/imgs/white_circle.png").convert()
     shadow_img.fill((10, 10, 10), special_flags=pygame.BLEND_RGB_SUB)
     self.shadow_img = shadow_img
-    self.shadow_surf = pygame.Surface((const.WIDTH,const.HEIGHT))
+    self.shadow_surf = pygame.Surface((const.WIDTH, const.HEIGHT))
     self.particle_list_bg = []
     self.particle_list_fg = []
     firefly_seperation = 300
@@ -165,29 +165,29 @@ class IntroScene(BaseScene):
     firefly_random_fg = 800
     self.global_timer = 0
     for y in range(const.HEIGHT // firefly_seperation + 2):
-        for x in range(const.WIDTH // firefly_seperation + 2):
-            firefly_particle(
-                self.particle_list_bg,
-                [x * firefly_seperation + random.randint(-firefly_random, firefly_random),
-                 y * firefly_seperation + random.randint(-firefly_random, firefly_random)],
-                random.randint(4,8),
-                (0, 0, 0),
-                (50, 0, 0),
-                4,
-                random.randint(2, 5) / 40
-                )
+      for x in range(const.WIDTH // firefly_seperation + 2):
+        firefly_particle(
+            self.particle_list_bg,
+            [x * firefly_seperation + random.randint(-firefly_random, firefly_random),
+             y * firefly_seperation + random.randint(-firefly_random, firefly_random)],
+            random.randint(4, 8),
+            (0, 0, 0),
+            (50, 0, 0),
+            4,
+            random.randint(2, 5) / 40
+        )
     for y in range(const.HEIGHT // firefly_seperation_fg):
-        for x in range(const.WIDTH // firefly_seperation_fg):
-            firefly_particle(
-                self.particle_list_fg,
-                [x * firefly_seperation_fg + random.randint(-firefly_random_fg, firefly_random_fg),
-                 y * firefly_seperation_fg + random.randint(-firefly_random_fg, firefly_random_fg)],
-                3,
-                (0, 0, 0),
-                (50, 0, 0),
-                8,
-                random.randint(2, 5) / 20
-                ),
+      for x in range(const.WIDTH // firefly_seperation_fg):
+        firefly_particle(
+            self.particle_list_fg,
+            [x * firefly_seperation_fg + random.randint(-firefly_random_fg, firefly_random_fg),
+             y * firefly_seperation_fg + random.randint(-firefly_random_fg, firefly_random_fg)],
+            3,
+            (0, 0, 0),
+            (50, 0, 0),
+            8,
+            random.randint(2, 5) / 20
+        ),
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -252,48 +252,53 @@ class IntroScene(BaseScene):
 
     # GLOW
     for particle in self.particle_list_bg:
-        if particle.glow["size"] >= 1:
-            particle_module.apply_glow(
-                screen,
-                particle.glow["size"] * (particle.current_size / particle.size),
-                particle.glow["colour"],
-                particle.glow["rings_num"],
-                (particle.pos[0],
-                  particle.pos[1]),
-                mult=1.5
-            )
-            shadow_size = (particle.glow["size"] * (particle.current_size / particle.size) * (1 +  sin(self.global_timer / 100) / 8)) * particle.size
-            img = pygame.transform.scale(self.shadow_img, (shadow_size, shadow_size))
-            self.shadow_surf.blit(img,
+      if particle.glow["size"] >= 1:
+        particle_module.apply_glow(
+            screen,
+            particle.glow["size"] * (particle.current_size / particle.size),
+            particle.glow["colour"],
+            particle.glow["rings_num"],
+            (particle.pos[0],
+             particle.pos[1]),
+            mult=1.5
+        )
+        shadow_size = (particle.glow["size"] * (particle.current_size / particle.size) * (
+            1 + sin(self.global_timer / 100) / 8)) * particle.size
+        img = pygame.transform.scale(
+            self.shadow_img, (shadow_size, shadow_size))
+        self.shadow_surf.blit(img,
                               (particle.pos[0] - img.get_width() / 2,
-                              particle.pos[1] - img.get_height() / 2),
+                               particle.pos[1] - img.get_height() / 2),
                               special_flags=pygame.BLEND_RGB_ADD)
     # particles
     for index, particle in sorted(enumerate(self.particle_list_bg), reverse=True):
       if particle.update():
         self.particle_list_bg.pop(index)
 
-    screen.blit(self.textinput.surface, ((screen.get_width() // 2 - (title.get_width() // 2)), (screen.get_height() // 2)))
-    
+    screen.blit(self.textinput.surface, ((screen.get_width() // 2 -
+                (title.get_width() // 2)), (screen.get_height() // 2)))
+
     if (not self.request_accepted):
       # GLOW
       for particle in self.particle_list_fg:
         if particle.glow["size"] >= 1:
-            particle_module.apply_glow(
-                screen,
-                particle.glow["size"] * (particle.current_size / particle.size),
-                particle.glow["colour"],
-                particle.glow["rings_num"],
-                (particle.pos[0],
-                  particle.pos[1]),
-                mult=2
-            )
-            shadow_size = (particle.glow["size"] * (particle.current_size / particle.size) * (1 +  sin(self.global_timer / 1000) / 8)) * particle.size
-            img = pygame.transform.scale(self.shadow_img, (shadow_size, shadow_size))
-            self.shadow_surf.blit(img,
-                              (particle.pos[0] - img.get_width() / 2,
-                              particle.pos[1] - img.get_height() / 2),
-                              special_flags=pygame.BLEND_RGB_ADD)
+          particle_module.apply_glow(
+              screen,
+              particle.glow["size"] * (particle.current_size / particle.size),
+              particle.glow["colour"],
+              particle.glow["rings_num"],
+              (particle.pos[0],
+               particle.pos[1]),
+              mult=2
+          )
+          shadow_size = (particle.glow["size"] * (particle.current_size / particle.size) * (
+              1 + sin(self.global_timer / 1000) / 8)) * particle.size
+          img = pygame.transform.scale(
+              self.shadow_img, (shadow_size, shadow_size))
+          self.shadow_surf.blit(img,
+                                (particle.pos[0] - img.get_width() / 2,
+                                 particle.pos[1] - img.get_height() / 2),
+                                special_flags=pygame.BLEND_RGB_ADD)
 
       # particles
       for index, particle in sorted(enumerate(self.particle_list_fg), reverse=True):
@@ -360,14 +365,14 @@ class GameScene(BaseScene):
     shadow_img = pygame.image.load("assets/imgs/white_circle.png").convert()
     shadow_img.fill((10, 10, 10), special_flags=pygame.BLEND_RGB_SUB)
     self.shadow_img = shadow_img
-    self.shadow_surf = pygame.Surface((const.WIDTH,const.HEIGHT))
+    self.shadow_surf = pygame.Surface((const.WIDTH, const.HEIGHT))
     self.particle_list_bg = []
     self.particle_list = particle_class(
-      [self.entity.position.x, self.entity.position.y],
-      4, 1, (0, 0, 0), 8, 100000,
-      glow={"size": 20, "rings_num": 4, "colour": (40, 0, 0)},
-      shape=2,
-      looping=True,
+        [self.entity.position.x, self.entity.position.y],
+        2, 1, (0, 0, 0), 8, 100000,
+        glow={"size": 20, "rings_num": 4, "colour": (40, 0, 0)},
+        shape=2,
+        looping=True,
     )
     self.global_timer = 0
 
@@ -578,7 +583,9 @@ class GameScene(BaseScene):
 
         if (const.TRIGGER_MODE and not const.HAUNTED_MODE):
           arg.client.send_message(
-              "/synth_shot", [const.MOVE_MODE, self.answer[self.answer_index]])
+              "/synth_shot_nodes", [random.randint(0, 28), random.choice([0, 1]), random.choice([1, 2])])
+          # arg.client.send_message(
+          #     "/synth_shot", [const.MOVE_MODE, self.answer[self.answer_index]])
         self.glow_frame_counter = const.GLOW_DURATION_FRAMES
 
         if (not const.HAUNTED_MODE):
@@ -594,21 +601,22 @@ class GameScene(BaseScene):
           self.go_to_init_pos = True
 
     if self.glow_frame_counter > (const.GLOW_DURATION_FRAMES - 12):
-    # if self.glow_frame_counter > 0:
+      # if self.glow_frame_counter > 0:
       self.glow_frame_counter -= 1
       # blend_t = self.glow_frame_counter / const.GLOW_DURATION_FRAMES
       trigger = {
-        "bg_color": (255, 0, 0), # utils.blend_color((150, 0, 0), (0, 0, 0), 1 - blend_t),
-        "text_color": (0,0,0),
-        "bg": self.bg_inv, 
-        "bg2": self.bg2_inv
+          # utils.blend_color((150, 0, 0), (0, 0, 0), 1 - blend_t),
+          "bg_color": (255, 0, 0),
+          "text_color": (0, 0, 0),
+          "bg": self.bg_inv,
+          "bg2": self.bg2_inv
       }
     else:
       trigger = {
-        "bg_color": (0, 0, 0),
-        "text_color": (255,0,0),
-        "bg": self.bg, 
-        "bg2": self.bg2
+          "bg_color": (0, 0, 0),
+          "text_color": (255, 0, 0),
+          "bg": self.bg,
+          "bg2": self.bg2
       }
 
     buffer.fill(trigger["bg_color"])
@@ -652,13 +660,14 @@ class GameScene(BaseScene):
 
     if self.particle_list.glow["size"] >= 1:
       particle_module.apply_glow(
-        buffer,
-        self.particle_list.glow["size"] * (self.particle_list.current_size / self.particle_list.size),
-        self.particle_list.glow["colour"],
-        self.particle_list.glow["rings_num"],
-        ((( (self.particle_list.pos[0]/6) + self.entity.position.x)-65)+ouija_pos[0], 
-         (self.entity.position.y+25 )+ouija_pos[1]),
-        mult=3.25
+          buffer,
+          self.particle_list.glow["size"] *
+          (self.particle_list.current_size / self.particle_list.size),
+          self.particle_list.glow["colour"],
+          self.particle_list.glow["rings_num"],
+          (((self.entity.position.x)+6)+ouija_pos[0],
+              (self.entity.position.y+25)+ouija_pos[1]),
+          mult=3.25
       )
 
     self.particle_list.update()
@@ -696,7 +705,7 @@ class GameScene(BaseScene):
 
     if const.ACTIVATE_NODES:
       self.draw_nodes_and_connections(screen, ouija_pos, current_time)
-    
+
     # for firefly in self.fireflies:
     #   firefly.update_radius(time_elapsed, 2)
     #   firefly.update_pos_firefly(time_elapsed, 0.02, pygame.display.get_window_size()[0], pygame.display.get_window_size()[1])
@@ -708,7 +717,8 @@ class GameScene(BaseScene):
     self.panel_input_msg_box_rect.height = self.textinput.surface.get_height()
     self.panel_input_msg_box_rect.x = (
         (screen.get_width() / 2) - ouija_pos[0]) - 90
-    self.panel_input_msg_box_rect.y = ( screen.get_height() - 20 ) - (ouija_pos[1])
+    self.panel_input_msg_box_rect.y = (
+        screen.get_height() - 20) - (ouija_pos[1])
 
     _text_rect_input = self.panel_input_msg_box_rect
     _text_rect_input.centerx = screen.get_width() // 2
@@ -735,7 +745,8 @@ class GameScene(BaseScene):
   def draw_board(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface, trigger_color: dict[str, Any]):
     """ Draw the ghost board with letters and messages. """
     ghost_msg = pygame.font.Font("assets/fonts/NicerNightie.ttf", 74)
-    ghost_msg = ghost_msg.render(str(self.current_answer), True, trigger_color["text_color"])
+    ghost_msg = ghost_msg.render(
+        str(self.current_answer), True, trigger_color["text_color"])
 
     # Draw "YES" and "NO"
     yes_text = self.font.render("Yes", True, trigger_color["text_color"])
@@ -744,7 +755,8 @@ class GameScene(BaseScene):
     buffer.blit(no_text, (270+ouija_pos[0], 50+ouija_pos[1]))
 
     # Draw "GOODBYE"
-    goodbye_text = self.font.render("Goodbye", True, trigger_color["text_color"])
+    goodbye_text = self.font.render(
+        "Goodbye", True, trigger_color["text_color"])
     buffer.blit(goodbye_text, (620+ouija_pos[0], 50 + ouija_pos[1]))
 
     for _, letter in enumerate(self.letters):
@@ -752,7 +764,8 @@ class GameScene(BaseScene):
         display_letter = "(  )"
       else:
         display_letter = letter.lower() if letter.isalpha() else letter
-      color = trigger_color["bg_color"] if display_letter.isalpha() else trigger_color["text_color"]
+      color = trigger_color["bg_color"] if display_letter.isalpha(
+      ) else trigger_color["text_color"]
       text = self.small_font.render(f"{display_letter}", True, color)
       pos = [const.CHARACTERS[letter]["pos"][0] + ouija_pos[0],
              const.CHARACTERS[letter]["pos"][1] + ouija_pos[1]]
@@ -763,7 +776,7 @@ class GameScene(BaseScene):
     _text_rect.centery = 148+ouija_pos[1]
 
     buffer.blit(ghost_msg, _text_rect)
-  
+
   def draw_head_and_next_node(self, parent_node, child_node, ouija_pos, current_time):
     start_pos = const.CHARACTERS[parent_node]["pos"]
     end_pos = const.CHARACTERS[child_node]["pos"]
@@ -796,7 +809,7 @@ class GameScene(BaseScene):
         "sprite": fx_soul_moving_sprite,
         "target_id": child_node,
         "info_target_offset_pos": const.CHARACTERS[child_node]["offset_pos_to"],
-        "line": GradientLine( start, end,  const.TEXT_LIGHTEST_COLOR,  const.TEXT_COLOR, 5 )
+        "line": GradientLine(start, end, const.TEXT_LIGHTEST_COLOR, const.TEXT_COLOR, 5)
     })
 
   def draw_nodes_and_connections(self, screen: pygame.Surface, ouija_pos: tuple[int, int], current_time: pygame.Surface):
@@ -805,7 +818,7 @@ class GameScene(BaseScene):
       node_id: str = self.activation_order[self.activation_index]
 
       if const.CHARACTERS.get(node_id):
-        node_head =  const.CHARACTERS[node_id]
+        node_head = const.CHARACTERS[node_id]
         node_next = node_head["right_nodes"] if node_head["direction"] == 1 else node_head["left_nodes"]
         node_index = node_head["node_index"]
         node_next_id = None
@@ -821,22 +834,25 @@ class GameScene(BaseScene):
             const.CHARACTERS[self.prev_node_head]["direction"] = 1
 
           if node_next_id == "L":
-            node_head["direction"] = -1          
-            
+            node_head["direction"] = -1
+
           if node_id == "S":
             const.CHARACTERS[node_next_id]["node_index"] += 1
-            const.CHARACTERS[node_next_id]["node_index"] %= len(node_head["right_nodes"])
+            const.CHARACTERS[node_next_id]["node_index"] %= len(
+                node_head["right_nodes"])
 
           if not node_next_id == "L":
             const.CHARACTERS[node_next_id]["direction"] = node_head["direction"]
             if utils.is_leave_node(const.CHARACTERS[node_next_id]):
               const.CHARACTERS[node_next_id]["direction"] = 1
-          
+
           if node_id == "D":
             for target in node_next:
-              self.draw_head_and_next_node(node_id, target, ouija_pos, current_time) 
+              self.draw_head_and_next_node(
+                  node_id, target, ouija_pos, current_time)
           else:
-            self.draw_head_and_next_node(node_id, node_next_id,  ouija_pos, current_time)
+            self.draw_head_and_next_node(
+                node_id, node_next_id, ouija_pos, current_time)
           self.prev_node_head = node_id
       self.activation_index += 1
 
@@ -854,7 +870,8 @@ class GameScene(BaseScene):
 
         sig["line"].draw(screen)
 
-        arg.client.send_message("/synth_shot_node_line", [ease_x/pygame.display.get_window_size()[0], ease_y/pygame.display.get_window_size()[1]])
+        arg.client.send_message("/synth_shot_node_line", [ease_x/pygame.display.get_window_size()[
+                                0], ease_y/pygame.display.get_window_size()[1], ease_x/pygame.display.get_window_size()[0] * 20])
 
         utils.draw_line_with_signal(
             screen, sig["start"], pygame.Vector2(ease_x, ease_y), progress, sig["sprite"], sig["info_target_offset_pos"])
@@ -877,7 +894,8 @@ class GameScene(BaseScene):
             self.all_sprites.add(_fx_reach_sprite)
 
             if (const.TRIGGER_MODE):
-                arg.client.send_message("/synth_shot_nodes", [random.uniform(0, 1)])
+              arg.client.send_message(
+                  "/synth_shot_nodes", [random.randint(0, 28), random.choice([0, 1]), random.choice([1, 2])])
             break
     self.signals = new_signals
 
