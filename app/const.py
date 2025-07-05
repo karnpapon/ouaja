@@ -42,8 +42,8 @@ GLOW_DURATION = 1  # seconds to fade out
 #  1 = left -> right
 # -1 = left <- right
 CHARACTERS = {
-  ' ': {"operation": "space", "pos": (462, 456), "right_nodes": [], "left_nodes": [], "node_index": 0,  "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '?': {"pos": (608, 50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  ' ': {"operation": "space", "pos": (462, 456+50), "right_nodes": [], "left_nodes": [], "node_index": 0,  "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '?': {"pos": (538, 50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
   '!': {"pos": (593, 50), "right_nodes": [], "left_nodes": [], "node_index": 0,  "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
 
   'A': {"pos": (87, 208), "right_nodes": ["T", "H", "N"], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(35, 6), "offset_pos_from": pygame.Vector2(35, 22)},
@@ -77,15 +77,15 @@ CHARACTERS = {
   'Y': {"pos": (392, 437), "right_nodes": ["D", "J", "P", "V", "Z"],"left_nodes": ["B", "H", "N", "T"], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(35, 11), "offset_pos_from": pygame.Vector2(35, 22)},
   'Z': {"pos": (546, 437), "right_nodes": [], "left_nodes": ["C", "I", "O", "U", "Y"], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(35, 11), "offset_pos_from": pygame.Vector2(35, 22)},
 
-  '0': {"pos": (92, 444), "right_nodes": ["E", "K", "Q", "W"], "node_index": 0,  "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '1': {"pos": (150, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '2': {"pos": (206, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '3': {"pos": (268, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '4': {"pos": (328, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '0': {"pos": (92+0, 444+50), "right_nodes": ["E", "K", "Q", "W"], "node_index": 0,  "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '1': {"pos": (150+20, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '2': {"pos": (206+30, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '3': {"pos": (268+45, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '4': {"pos": (392, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
 
-  '5': {"pos": (638, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '6': {"pos": (699, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '7': {"pos": (758, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '8': {"pos": (815, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
-  '9': {"pos": (875, 444), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)}
+  '5': {"pos": (546, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '6': {"pos": (699-70, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '7': {"pos": (758-50, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '8': {"pos": (815-40, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)},
+  '9': {"pos": (875-20, 444+50), "right_nodes": [], "left_nodes": [], "node_index": 0, "direction": 1, "offset_pos_to": pygame.Vector2(0, 0), "offset_pos_from": pygame.Vector2(0, 0)}
 }

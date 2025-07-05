@@ -8,6 +8,7 @@ import os
 import queue
 import threading
 import datetime as dt
+from math import sin
 from easing_functions import CubicEaseOut
 from typing import Any, Dict
 from . import states
@@ -21,6 +22,8 @@ from .sprite import FXSprite, SpriteSheet, AnimationFactory
 from .model import conversation_with_summary
 from .line import GradientLine
 from .firefly import Firefly
+from . import particles as particle_module
+from .particles import firefly_particle, particle_class
 
 response = None
 fetching = False
@@ -150,6 +153,42 @@ class IntroScene(BaseScene):
     self.textinput = text_input
     pygame.key.set_repeat(400, 25)
 
+    shadow_img = pygame.image.load("assets/imgs/white_circle.png").convert()
+    shadow_img.fill((10, 10, 10), special_flags=pygame.BLEND_RGB_SUB)
+    self.shadow_img = shadow_img
+    self.shadow_surf = pygame.Surface((const.WIDTH,const.HEIGHT))
+    self.particle_list_bg = []
+    self.particle_list_fg = []
+    firefly_seperation = 300
+    firefly_seperation_fg = 300
+    firefly_random = 200
+    firefly_random_fg = 800
+    self.global_timer = 0
+    for y in range(const.HEIGHT // firefly_seperation + 2):
+        for x in range(const.WIDTH // firefly_seperation + 2):
+            firefly_particle(
+                self.particle_list_bg,
+                [x * firefly_seperation + random.randint(-firefly_random, firefly_random),
+                 y * firefly_seperation + random.randint(-firefly_random, firefly_random)],
+                random.randint(4,8),
+                (0, 0, 0),
+                (50, 0, 0),
+                4,
+                random.randint(2, 5) / 40
+                )
+    for y in range(const.HEIGHT // firefly_seperation_fg):
+        for x in range(const.WIDTH // firefly_seperation_fg):
+            firefly_particle(
+                self.particle_list_fg,
+                [x * firefly_seperation_fg + random.randint(-firefly_random_fg, firefly_random_fg),
+                 y * firefly_seperation_fg + random.randint(-firefly_random_fg, firefly_random_fg)],
+                3,
+                (0, 0, 0),
+                (50, 0, 0),
+                8,
+                random.randint(2, 5) / 20
+                ),
+
   def on_enter(self): pass
   def on_exit(self): pass
   def setup(self): pass
@@ -211,8 +250,56 @@ class IntroScene(BaseScene):
       pygame.draw.rect(screen, eval_bg_color,
                        self.panel_input_msg_box_rect, width=0)
 
-    screen.blit(self.textinput.surface, ((screen.get_width(
-    ) // 2 - (title.get_width() // 2)), (screen.get_height() // 2)))
+    # GLOW
+    for particle in self.particle_list_bg:
+        if particle.glow["size"] >= 1:
+            particle_module.apply_glow(
+                screen,
+                particle.glow["size"] * (particle.current_size / particle.size),
+                particle.glow["colour"],
+                particle.glow["rings_num"],
+                (particle.pos[0],
+                  particle.pos[1]),
+                mult=1.5
+            )
+            shadow_size = (particle.glow["size"] * (particle.current_size / particle.size) * (1 +  sin(self.global_timer / 100) / 8)) * particle.size
+            img = pygame.transform.scale(self.shadow_img, (shadow_size, shadow_size))
+            self.shadow_surf.blit(img,
+                              (particle.pos[0] - img.get_width() / 2,
+                              particle.pos[1] - img.get_height() / 2),
+                              special_flags=pygame.BLEND_RGB_ADD)
+    # particles
+    for index, particle in sorted(enumerate(self.particle_list_bg), reverse=True):
+      if particle.update():
+        self.particle_list_bg.pop(index)
+
+    screen.blit(self.textinput.surface, ((screen.get_width() // 2 - (title.get_width() // 2)), (screen.get_height() // 2)))
+    
+    if (not self.request_accepted):
+      # GLOW
+      for particle in self.particle_list_fg:
+        if particle.glow["size"] >= 1:
+            particle_module.apply_glow(
+                screen,
+                particle.glow["size"] * (particle.current_size / particle.size),
+                particle.glow["colour"],
+                particle.glow["rings_num"],
+                (particle.pos[0],
+                  particle.pos[1]),
+                mult=2
+            )
+            shadow_size = (particle.glow["size"] * (particle.current_size / particle.size) * (1 +  sin(self.global_timer / 1000) / 8)) * particle.size
+            img = pygame.transform.scale(self.shadow_img, (shadow_size, shadow_size))
+            self.shadow_surf.blit(img,
+                              (particle.pos[0] - img.get_width() / 2,
+                              particle.pos[1] - img.get_height() / 2),
+                              special_flags=pygame.BLEND_RGB_ADD)
+
+      # particles
+      for index, particle in sorted(enumerate(self.particle_list_fg), reverse=True):
+        if particle.update():
+          self.particle_list_fg.pop(index)
+
 
 class GameScene(BaseScene):
   def __init__(self):
@@ -266,9 +353,23 @@ class GameScene(BaseScene):
     self.haunted_interval = 200  # ms
     self.haunted_rand_lower_bound = 50
     self.haunted_rand_upper_bound = 1000
-    self.fireflies = [Firefly(pygame.display.get_window_size()[0], pygame.display.get_window_size()[1]) for i in range(const.NUM_FIREFLIES)]
+    # self.fireflies = [Firefly(pygame.display.get_window_size()[0], pygame.display.get_window_size()[1]) for i in range(const.NUM_FIREFLIES)]
     self.start_time = dt.datetime.now()
     self.prev_node_head = None
+
+    shadow_img = pygame.image.load("assets/imgs/white_circle.png").convert()
+    shadow_img.fill((10, 10, 10), special_flags=pygame.BLEND_RGB_SUB)
+    self.shadow_img = shadow_img
+    self.shadow_surf = pygame.Surface((const.WIDTH,const.HEIGHT))
+    self.particle_list_bg = []
+    self.particle_list = particle_class(
+      [self.entity.position.x, self.entity.position.y],
+      4, 1, (0, 0, 0), 8, 100000,
+      glow={"size": 20, "rings_num": 4, "colour": (40, 0, 0)},
+      shape=2,
+      looping=True,
+    )
+    self.global_timer = 0
 
   def on_enter(self): pass
   def on_exit(self): pass
@@ -549,6 +650,19 @@ class GameScene(BaseScene):
     #     (entity.position.y-(60-ouija_pos[1]))
     #   ))
 
+    if self.particle_list.glow["size"] >= 1:
+      particle_module.apply_glow(
+        buffer,
+        self.particle_list.glow["size"] * (self.particle_list.current_size / self.particle_list.size),
+        self.particle_list.glow["colour"],
+        self.particle_list.glow["rings_num"],
+        ((( (self.particle_list.pos[0]/6) + self.entity.position.x)-65)+ouija_pos[0], 
+         (self.entity.position.y+25 )+ouija_pos[1]),
+        mult=3.25
+      )
+
+    self.particle_list.update()
+
     if self.go_to_init_pos and self.to != pygame.math.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y):
       self.answer_index = 0
       self.to = pygame.Vector2(const.INIT_POINT_X, const.INIT_POINT_Y)
@@ -575,9 +689,10 @@ class GameScene(BaseScene):
 
     screen.fill((0, 0, 0))
     screen.blit(buffer, self.camera.offset)
-    if DEBUG:
-      utils.draw_nine_slice_scaled(
-          self.nine, screen, self.panel_rect, self.tile_size, 2)
+
+    # if DEBUG:
+    #   utils.draw_nine_slice_scaled(
+    #       self.nine, screen, self.panel_rect, self.tile_size, 2)
 
     if const.ACTIVATE_NODES:
       self.draw_nodes_and_connections(screen, ouija_pos, current_time)
@@ -589,11 +704,11 @@ class GameScene(BaseScene):
 
   def draw_text_input(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface):
     """ Draw the text input box for user input. """
-    self.panel_input_msg_box_rect.width = self.textinput.surface.get_width()
+    self.panel_input_msg_box_rect.width = self.textinput.surface.get_width() - 15
     self.panel_input_msg_box_rect.height = self.textinput.surface.get_height()
     self.panel_input_msg_box_rect.x = (
         (screen.get_width() / 2) - ouija_pos[0]) - 90
-    self.panel_input_msg_box_rect.y = ( screen.get_height() - 60 ) - (ouija_pos[1])
+    self.panel_input_msg_box_rect.y = ( screen.get_height() - 20 ) - (ouija_pos[1])
 
     _text_rect_input = self.panel_input_msg_box_rect
     _text_rect_input.centerx = screen.get_width() // 2
@@ -614,8 +729,8 @@ class GameScene(BaseScene):
 
     buffer.blit(self.textinput.surface,
                 (_text_rect_input.x, _text_rect_input.y))
-    # draw_nine_slice_scaled(
-    #     nine_2, WINDOW, panel_input_msg_box_rect, tile_size, 2)
+    # utils.draw_nine_slice_scaled(
+    #     self.nine_2, buffer, _text_rect_input, self.tile_size, 2)
 
   def draw_board(self, screen: pygame.Surface, ouija_pos: tuple[int, int], buffer: pygame.Surface, trigger_color: dict[str, Any]):
     """ Draw the ghost board with letters and messages. """
@@ -625,12 +740,12 @@ class GameScene(BaseScene):
     # Draw "YES" and "NO"
     yes_text = self.font.render("Yes", True, trigger_color["text_color"])
     no_text = self.font.render("No", True, trigger_color["text_color"])
-    buffer.blit(yes_text, (70+ouija_pos[0], 50+ouija_pos[1]))
-    buffer.blit(no_text, (240+ouija_pos[0], 50+ouija_pos[1]))
+    buffer.blit(yes_text, (140+ouija_pos[0], 50+ouija_pos[1]))
+    buffer.blit(no_text, (270+ouija_pos[0], 50+ouija_pos[1]))
 
     # Draw "GOODBYE"
     goodbye_text = self.font.render("Goodbye", True, trigger_color["text_color"])
-    buffer.blit(goodbye_text, (700+ouija_pos[0], 50 + ouija_pos[1]))
+    buffer.blit(goodbye_text, (620+ouija_pos[0], 50 + ouija_pos[1]))
 
     for _, letter in enumerate(self.letters):
       if letter == " ":
@@ -762,7 +877,7 @@ class GameScene(BaseScene):
             self.all_sprites.add(_fx_reach_sprite)
 
             if (const.TRIGGER_MODE):
-              arg.client.send_message("/synth_shot_nodes", [])
+                arg.client.send_message("/synth_shot_nodes", [random.uniform(0, 1)])
             break
     self.signals = new_signals
 
